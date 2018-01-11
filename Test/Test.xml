@@ -1,0 +1,117 @@
+<description>
+	<fichier nom="c:\temp\test.csv" codage="UTF8" sepenr="AUTO" sepchamp=";" delchamp='"'>
+		<segment nom="entete" uniquepar="en">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="numero cde internet" format="9"/>
+			<champ nom="reference cde" format="a"/>
+			<champ nom="numero cli" format="9"/>
+		</segment>
+		<segment nom="livraison" uniquepar="al">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="prenom" format="a"/>
+			<champ nom="nom" format="a"/>
+			<champ nom="adresse1" format="a"/>
+			<champ nom="adresse2" format="a"/>
+			<champ nom="codepostal" format="a"/>
+			<champ nom="ville" format="a"/>
+		</segment>
+		<segment nom="facturation" uniquepar="af">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="prenom" format="a"/>
+			<champ nom="nom" format="a"/>
+			<champ nom="adresse1" format="a"/>
+			<champ nom="adresse2" format="a"/>
+			<champ nom="codepostal" format="a"/>
+			<champ nom="ville" format="a"/>
+		</segment>
+		<segment nom="ligne" uniquepar="li">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="reference" format="a"/>
+			<champ nom="designation" format="a"/>
+			<champ nom="quantite" format="9"/>
+			<champ nom="puttc" format="9.0"/>
+			<champ nom="mtttc" format="9.0"/>
+		</segment>
+		<segment nom="pied" uniquepar="fp">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="port" format="9"/>
+			<champ nom="montant" format="9.0"/>
+		</segment>
+		<liens>
+		.entete
+		..livraison.u
+		..facturation.u
+		..ligne
+		..pied.u
+		</liens>
+	</fichier>
+	<tables>
+		<segment nom="entetetbl" uniquepar="numero cde internet">
+			<champ nom="numero cde internet" format="System.Int32"/>
+			<champ nom="reference client document" format="System.String"/>
+			<champ nom="cref" format="System.String"/>
+			<champ nom="nom" format="System.String"/>
+			<champ nom="adresse1" format="System.String"/>
+			<champ nom="adresse2" format="System.String"/>
+			<champ nom="codepostal" format="System.String"/>
+			<champ nom="ville" format="System.String"/>
+			<champ nom="cref2" format="System.String"/>
+			<champ nom="nom livre" format="System.String"/>
+			<champ nom="adresse1 livre" format="System.String"/>
+			<champ nom="adresse2 livre" format="System.String"/>
+			<champ nom="codepostal livre" format="System.String"/>
+			<champ nom="ville livre" format="System.String"/>
+		</segment>
+		<segment nom="lignetbl">
+			<champ nom="numero cde internet" format="System.Int32"/>
+			<champ nom="code article" format="System.String"/>
+			<champ nom="designation" format="System.String"/>
+			<champ nom="quantite" format="System.Int32"/>
+			<champ nom="prix vente remise TTC" format="System.Double"/>
+			<champ nom="montant vente TTC" format="System.Double"/>
+		</segment>
+		<liens>
+		.entetetbl
+		..lignetbl.numero cde internet.numero cde internet
+		</liens>
+	</tables>
+	<export>
+		<segment nom="entete">
+		.numero cde internet.entetetbl
+		.reference cde.entetetbl.reference client document
+		</segment>
+		<segment nom="livraison">
+		.=99998.entetetbl.cref2
+		.prenom.entetetbl.nom livre
+		.= .entetetbl.nom livre
+		.nom.entetetbl.nom livre
+		.adresse1.entetetbl.adresse1 livre
+		.adresse2.entetetbl.adresse2 livre
+		.codepostal.entetetbl.codepostal livre
+		.ville.entetetbl.ville livre
+		</segment>
+		<segment nom="facturation">
+		.=99998.entetetbl.cref
+		.prenom.entetetbl.nom
+		.= .entetetbl.nom
+		.nom.entetetbl.nom
+		.adresse1.entetetbl.adresse1
+		.adresse2.entetetbl.adresse2
+		.codepostal.entetetbl.codepostal
+		.ville.entetetbl.ville
+		</segment>
+		<segment nom="ligne">
+		.reference.lignetbl.code article
+		.designation.lignetbl
+		.quantite.lignetbl
+		.puttc.lignetbl.prix vente remise ttc
+		.mtttc.lignetbl.montant vente ttc
+		</segment>
+		<segment nom="pied">
+		.=portposte.lignetbl.code article
+		.=1.lignetbl.quantite
+		.montant.lignetbl.prix vente remise ttc
+		.montant.lignetbl.montant vente ttc
+		</segment>
+	</export>
+</description>

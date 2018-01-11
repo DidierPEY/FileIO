@@ -1,0 +1,321 @@
+<description>
+	<fichier codage="ASCII" sepenr="AUTO">
+		<segment nom="CF" uniquepar="05804">
+			<champ nom="typeligne" format="9[5]"/>
+		</segment>
+		<segment nom="CF2" uniquepar="05504">
+			<champ nom="typeligne" format="9[5]"/>
+		</segment>
+		<segment nom="MF" uniquepar="05704">
+			<champ nom="typeligne" format="9[5]"/>
+		</segment>
+		<segment nom="MT" uniquepar="05304">
+			<champ nom="typeligne" format="9[5]"/>
+		</segment>
+		<segment nom="SF" uniquepar="05604">
+			<champ nom="typeligne" format="9[5]"/>
+		</segment>
+		<segment nom="DES" uniquepar="100">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="destinataire" format="a[13]"/>
+		</segment>
+		<segment nom="EME" uniquepar="221">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="emetteur" format="a[13]"/>
+			<champ nom="reference" format="a[8]"/>
+		</segment>
+		<segment nom="DATE" uniquepar="176">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="date" format="djdmda"/>
+		</segment>
+		<segment nom="FICHE" uniquepar="209">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="ean" format="a[13]"/>
+			<champ nom="va" format="9[2]"/>
+			<champ nom="typeproduit" format="9[2]"/>
+			<champ nom="parution" format="djdmda"/>
+			<champ nom="fincomm" format="djdmda"/>
+			<champ nom="NA segmentation" format="a[4]"/>
+			<champ nom="NA reseau" format="a[3]"/>
+			<champ nom="lien" format="9[1]"/>
+			<champ nom="eanlien" format="a[13]"/>
+			<champ nom="valien" format="9[2]"/>
+			<champ nom="commandable" format="9[1]"/>
+			<champ nom="lot" format="9[1]"/>
+		</segment>
+		<segment nom="TARIF" uniquepar="203">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="date" format="djdmda"/>
+			<champ nom="disponibilite" format="9[2]"/>
+			<champ nom="retour" format="9[1]"/>
+			<champ nom="typeprix" format="9[1]"/>
+			<champ nom="cdedilicom" format="a[1]"/>
+			<champ nom="impression" format="a[1]"/>
+			<champ nom="publics" format="9[2]"/>
+			<champ nom="motif supp" format="9[2]"/>
+			<champ nom="non utilise" format="a[4]"/>
+			<champ nom="prix" format="9[5]0[3]"/>
+			<champ nom="scolaire" format="a[2]"/>
+			<champ nom="tva1" format="9[2]0[2]"/>
+			<champ nom="mtht1" format="9[5]0[3]"/>
+			<champ nom="tva2" format="9[2]0[2]"/>
+			<champ nom="mtht2" format="9[5]0[3]"/>
+			<champ nom="tva3" format="9[2]0[2]"/>
+			<champ nom="mtht3" format="9[5]0[3]"/>
+		</segment>
+		<segment nom="FICHE2" uniquepar="204">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="ean" format="a[13]"/>
+			<champ nom="va" format="9[2]"/>
+		</segment>
+		<segment nom="DESCRIPTION" uniquepar="211">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="libelle std" format="a[30]"/>
+			<champ nom="libelle court" format="a[20]"/>
+			<champ nom="symbolisation" format="9[1]"/>
+			<champ nom="NA unite mesure" format="a[2]"/>
+			<champ nom="NA mesure nette" format="a[7]"/>
+			<champ nom="pres magasin" format="9[2]"/>
+			<champ nom="epaisseur" format="9[4]"/>
+			<champ nom="largeur" format="9[4]"/>
+			<champ nom="hauteur" format="9[4]"/>
+			<champ nom="poids" format="9[7]"/>
+			<champ nom="diffusion" format="9[1]"/>
+			<champ nom="NA nb references" format="a[4]"/>
+			<champ nom="NA alcool" format="a[4]"/>
+			<champ nom="produit dangereux" format="9[1]"/>
+		</segment>
+		<segment nom="EDITION" uniquepar="241">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="editeur" format="a[15]"/>
+			<champ nom="collection" format="a[15]"/>
+			<champ nom="auteur" format="a[20]"/>
+			<champ nom="pres editeur" format="a[2]"/>
+		</segment>
+		<segment nom="LIVRE" uniquepar="242">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="ean" format="a[13]"/>
+			<champ nom="va" format="9[2]"/>
+			<champ nom="isbn" format="a[10]"/>
+			<champ nom="ref frs" format="a[12]"/>
+			<champ nom="serie" format="a[10]"/>
+			<champ nom="theme" format="9[4]"/>
+			<champ nom="isbn editeur" format="a[8]"/>
+		</segment>
+		<segment nom="LIBELLE" uniquepar="213">
+			<champ nom="typeligne" format="9[3]"/>
+			<champ nom="no ligne" format="9[1]"/>
+			<champ nom="libelle" format="a[100]"/>
+		</segment>
+		<liens>
+		.CF.f
+		..DES.u
+		..EME.u
+		..DATE.u
+		..FICHE
+		...TARIF.u
+		...DESCRIPTION.u
+		...EDITION.u
+		...LIVRE.u
+		...LIBELLE
+		.CF2.f
+		..DES.u
+		..EME.u
+		..DATE.u
+		..FICHE
+		...TARIF.u
+		...DESCRIPTION.u
+		...EDITION.u
+		...LIVRE.u
+		...LIBELLE
+		.MF.f
+		..DES.u
+		..EME.u
+		..DATE.u
+		..FICHE
+		...TARIF.u
+		...DESCRIPTION.u
+		...EDITION.u
+		...LIVRE.u
+		...LIBELLE
+		.MT.f
+		..DES.u
+		..EME.u
+		..DATE.u
+		..FICHE2
+		...TARIF.u
+		.SF.f
+		..DES.u
+		..EME.u
+		..DATE.u
+		..FICHE
+		</liens>
+	</fichier>
+	<tables>
+		<segment nom="operation" uniquepar="op,destinataire,emetteur,reference,date emission">
+			<champ nom="op" format="System.String"/>
+			<champ nom="destinataire" format="System.String"/>
+			<champ nom="emetteur" format="System.String"/>
+			<champ nom="reference" format="System.String"/>
+			<champ nom="date emission" format="System.DateTime"/>
+		</segment>
+		<segment nom="articles" uniquepar="op,destinataire,emetteur,reference,date emission,ean13 article,code va">
+			<champ nom="op" format="System.String"/>
+			<champ nom="destinataire" format="System.String"/>
+			<champ nom="emetteur" format="System.String"/>
+			<champ nom="reference" format="System.String"/>
+			<champ nom="date emission" format="System.DateTime"/>
+			<champ nom="EAN13 article" format="System.String"/>
+			<champ nom="Fiche supprimee par DILICOM" format="System.Boolean"/>
+			<champ nom="Code VA" format="System.Byte"/>
+			<champ nom="Type de produit" format="System.Byte"/>
+			<champ nom="Date de parution" format="System.DateTime"/>
+			<champ nom="Date fin commercialisation" format="System.DateTime"/>
+			<champ nom="Lien entre les codes" format="System.Byte"/>
+			<champ nom="EAN du produit lie" format="System.String"/>
+			<champ nom="VA du produit lie" format="System.Byte"/>
+			<champ nom="Article commandable par revendeur" format="System.Byte"/>
+			<champ nom="Type de lot" format="System.Byte"/>
+			<champ nom="Date application tarif" format="System.DateTime"/>
+			<champ nom="Code de disponibilite" format="System.Byte"/>
+			<champ nom="Code retour" format="System.Byte"/>
+			<champ nom="Type de prix" format="System.Byte"/>
+			<champ nom="Commandable ou non sur DILICOM" format="System.String"/>
+			<champ nom="Prix" format="System.Double"/>
+			<champ nom="Classification de remise" format="System.String"/>
+			<champ nom="Taux TVA1" format="System.Double"/>
+			<champ nom="Montant HT1" format="System.Double"/>
+			<champ nom="Taux TVA2" format="System.Double"/>
+			<champ nom="Montant HT2" format="System.Double"/>
+			<champ nom="Taux TVA3" format="System.Double"/>
+			<champ nom="Montant HT3" format="System.Double"/>
+			<champ nom="Libelle standard" format="System.String"/>
+			<champ nom="Libelle caisse" format="System.String"/>
+			<champ nom="Symbolisation" format="System.Byte"/>
+			<champ nom="Presentation en magasin" format="System.Byte"/>
+			<champ nom="Epaisseur" format="System.Int32"/>
+			<champ nom="Largeur"  format="System.Int32"/>
+			<champ nom="Hauteur" format="System.Int32"/>
+			<champ nom="Poids" format="System.Int32"/>
+			<champ nom="Diffusion unique ou multiple" format="System.Byte"/>
+			<champ nom="Produit dangereux" format="System.Byte"/>
+			<champ nom="Editeur" format="System.String"/>
+			<champ nom="Collection" format="System.String"/>
+			<champ nom="Auteur" format="System.String"/>
+			<champ nom="Presentation editeur" format="System.String"/>
+			<champ nom="Reference fournisseur" format="System.String"/>
+			<champ nom="Collection serielle" format="System.String"/>
+			<champ nom="Theme" format="System.Int16"/>
+			<champ nom="Distribue par" format="System.String"/>
+			<champ nom="Type produit interne" format="System.String"/>
+			<champ nom="Publics" format="System.Byte"/>
+			<champ nom="Impression a la demande" format="System.String"/>
+			<champ nom="Motif suppression fiche" format="System.Byte"/>
+		</segment>
+		<segment nom="articleslib">
+			<champ nom="op" format="System.String"/>
+			<champ nom="destinataire" format="System.String"/>
+			<champ nom="emetteur" format="System.String"/>
+			<champ nom="reference" format="System.String"/>
+			<champ nom="date emission" format="System.DateTime"/>
+			<champ nom="EAN13 article" format="System.String"/>
+			<champ nom="Code VA" format="System.Byte"/>
+			<champ nom="no ordre" format="System.Byte"/>
+			<champ nom="libelle etendu" format="System.String"/>
+		</segment>
+		<liens>
+		.operation
+		..articles.op,destinataire,emetteur,reference,date emission.op,destinataire,emetteur,reference,date emission
+		...articleslib.op,destinataire,emetteur,reference,date emission,ean13 article,code va.op,destinataire,emetteur,reference,date emission,ean13 article,code va.f
+		</liens>
+	</tables>
+	<export>
+		<segment nom="CF">
+			.typeligne.operation.op
+		</segment>
+		<segment nom="CF2">
+			.typeligne.operation.op
+		</segment>
+		<segment nom="MF">
+			.typeligne.operation.op
+		</segment>
+		<segment nom="SF">
+			.typeligne.operation.op
+		</segment>
+		<segment nom="MT">
+			.typeligne.operation.op
+		</segment>
+		<segment nom="DES">
+			.destinataire.operation
+		</segment>
+		<segment nom="EME">
+			.emetteur.operation
+			.reference.operation
+		</segment>
+		<segment nom="DATE">
+			.date.operation.date emission
+		</segment>
+		<segment nom="FICHE">
+			.ean.articles.ean13 article
+			.va.articles.code va
+			.typeproduit.articles.Type de produit
+			.parution.articles.Date de parution
+			.fincomm.articles.Date fin commercialisation
+			.lien.articles.Lien entre les codes
+			.eanlien.articles.EAN du produit lie
+			.valien.articles.VA du produit lie
+			.commandable.articles.Article commandable par revendeur
+			.lot.articles.Type de lot
+		</segment>
+		<segment nom="FICHE2">
+			.ean.articles.ean13 article
+			.va.articles.code va
+		</segment>
+		<segment nom="DESCRIPTION">
+			.libelle std.articles.Libelle standard
+			.libelle court.articles.Libelle caisse
+			.symbolisation.articles.Symbolisation
+			.pres magasin.articles.Presentation en magasin
+			.epaisseur.articles
+			.largeur.articles
+			.hauteur.articles
+			.poids.articles
+			.diffusion.articles.Diffusion unique ou multiple
+			.produit dangereux.articles.Produit dangereux
+		</segment>
+		<segment nom="EDITION">
+			.editeur.articles
+			.collection.articles
+			.auteur.articles
+			.pres editeur.articles.Presentation editeur
+		</segment>
+		<segment nom="LIVRE">
+			.ref frs.articles.Reference fournisseur
+			.serie.articles.Collection serielle
+			.theme.articles
+			.isbn editeur.articles.Distribue par
+		</segment>
+		<segment nom="TARIF">
+			.date.articles.Date application tarif
+			.disponibilite.articles.Code de disponibilite
+			.retour.articles.Code retour
+			.typeprix.articles.Type de prix
+			.cdedilicom.articles.Commandable ou non sur DILICOM
+			.impression.articles.Impression a la demande
+			.publics.articles.Publics
+			.motif supp.articles.Motif suppression fiche
+			.prix.articles.Prix
+			.scolaire.articles.Classification de remise
+			.tva1.articles.Taux TVA1
+			.mtht1.articles.Montant HT1
+			.tva2.articles.Taux TVA2
+			.mtht2.articles.Montant HT2
+			.tva3.articles.Taux TVA3
+			.mtht3.articles.Montant HT3
+		</segment>
+		<segment nom="LIBELLE">
+			.no ligne.articleslib.no ordre
+			.libelle.articleslib.libelle etendu
+		</segment>
+	</export>
+</description>

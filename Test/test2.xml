@@ -1,0 +1,107 @@
+<description>
+	<fichier codage="ASCII" sepenr="\n" sepchamp=";">
+		<segment nom="entete" uniquepar="ec">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="client" format="a"/>
+			<champ nom="date cde" format="djdmda[4]"/>
+			<champ nom="reference cde" format="a"/>
+			<champ nom="nom" format="a"/>
+			<champ nom="adresse1" format="a"/>
+			<champ nom="adresse2" format="a"/>
+			<champ nom="code postal" format="a"/>
+			<champ nom="ville" format="a"/>
+			<champ nom="utilisateur" format="a"/>
+			<champ nom="classe" format="a"/>
+			<champ nom="client livre" format="a"/>
+		</segment>
+		<segment nom="commentaire" uniquepar="com">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="commentaire" format="m"/>
+		</segment>
+		<segment nom="ligne" uniquepar="lc">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="reference" format="a"/>
+			<champ nom="designation" format="a"/>
+			<champ nom="quantite" format="9"/>
+			<champ nom="pubttc" format="9.0"/>
+			<champ nom="remise" format="9"/>
+			<champ nom="punttc" format="9.0"/>
+			<champ nom="tva" format="9.0"/>
+		</segment>
+		<segment nom="pied" uniquepar="fp">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="montant" format="9.0"/>
+		</segment>
+		<liens>
+		.entete.u
+		..commentaire.fu
+		..ligne
+		..pied.u
+		</liens>
+	</fichier>
+	<tables>
+		<segment nom="entetetbl">
+			<champ nom="date commande" format="System.DateTime"/>
+			<champ nom="reference client document" format="System.String"/>
+			<champ nom="observations" format="System.String"/>
+			<champ nom="cref" format="System.String"/>
+			<champ nom="nom" format="System.String"/>
+			<champ nom="adresse1" format="System.String"/>
+			<champ nom="adresse2" format="System.String"/>
+			<champ nom="code postal" format="System.String"/>
+			<champ nom="ville" format="System.String"/>
+			<champ nom="utilisateur" format="System.String"/>
+			<champ nom="classe" format="System.String"/>
+			<champ nom="cref2" format="System.String"/>
+		</segment>
+		<segment nom="lignetbl">
+			<champ nom="code article" format="System.String"/>
+			<champ nom="designation" format="System.String"/>
+			<champ nom="quantite" format="System.Int32"/>
+			<champ nom="prix vente brut TTC" format="System.Double"/>
+			<champ nom="remise" format="System.Double"/>
+			<champ nom="prix vente remise TTC" format="System.Double"/>
+			<champ nom="TVA" format="System.Double"/>
+		</segment>
+		<liens>
+		.entetetbl.f
+		.lignetbl.f
+		</liens>
+	</tables>
+	<export>
+		<segment nom="entete">
+		.date cde.entetetbl.date commande
+		.reference cde.entetetbl.reference client document
+		.client.entetetbl.cref
+		.nom.entetetbl
+		.adresse1.entetetbl
+		.adresse2.entetetbl
+		.code postal.entetetbl
+		.ville.entetetbl
+		.utilisateur.entetetbl
+		.classe.entetetbl
+		.client livre.entetetbl.cref2
+		</segment>
+		<segment nom="commentaire">
+		.commentaire.entetetbl.observations
+		</segment>
+		<segment nom="ligne">
+		.reference.lignetbl.code article
+		.designation.lignetbl
+		.quantite.lignetbl
+		.pubttc.lignetbl.prix vente brut ttc
+		.remise.lignetbl
+		.punttc.lignetbl.prix vente remise ttc
+		.tva.lignetbl
+		</segment>
+		<segment nom="pied">
+		.=port.lignetbl.code article
+		.=PORT.lignetbl.designation
+		.=1.lignetbl.quantite
+		.montant.lignetbl.prix vente brut ttc
+		.=0.lignetbl.remise
+		.montant.lignetbl.prix vente remise ttc
+		.=20.lignetbl.tva
+		</segment>
+	</export>
+</description>
