@@ -746,7 +746,7 @@ namespace llt.FileIO.ImportExport
             /// </summary>
             /// <param name="dependde">L'enregistrement père</param>
             /// <returns>La liste des enregistrements</returns>
-            /// <remarks>Si <paramref name="depende"/> est null, tous les enregistrement de la table sont renvoyés</remarks>
+            /// <remarks>Si <paramref name="dependde"/> est null, tous les enregistrement de la table sont renvoyés</remarks>
             internal DataRow[] getRows(DataRow dependde)
             {
                 // Lien racine

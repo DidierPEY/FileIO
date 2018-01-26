@@ -156,16 +156,24 @@ namespace llt.FileIO.ImportExport
             /// <returns>Chaine de caractère obtenu</returns>
             internal override string SetValue(object value)
             {
-                if (Debut == -1)
-                    return value.ToString();
+                if (value != null && value != System.DBNull.Value)
+                {
+                    if (Debut == -1)
+                        return value.ToString();
+                    else
+                    {
+                        string tmpvalue = (value == null ? "" : value.ToString());
+                        if (tmpvalue.Length > Longueur)
+                            throw new FileIOError(this.GetType().FullName, "La taille de la chaine '" + tmpvalue + "' est trop grande (longueur maxi " + Longueur.ToString() + ")");
+                        else
+                            tmpvalue = tmpvalue.PadRight(Longueur - tmpvalue.Length, ' ');
+                        return tmpvalue;
+                    }
+                }
                 else
                 {
-                    string tmpvalue = value.ToString();
-                    if (tmpvalue.Length > Longueur)
-                        throw new FileIOError(this.GetType().FullName, "La taille de la chaine '" + tmpvalue + "' est trop grande (longueur maxi " + Longueur.ToString() + ")");
-                    else
-                        tmpvalue = tmpvalue.PadRight(Longueur - tmpvalue.Length, ' ');
-                    return tmpvalue;
+                    if (Debut == -1) return "";
+                    else return (new StringBuilder(" ", Longueur)).ToString();
                 }
             }
         }
@@ -226,7 +234,7 @@ namespace llt.FileIO.ImportExport
                 // Récupère la valeur
                 string tmpvalue = Debut == -1 ? fromvalue : fromvalue.Substring(Debut, Longueur);
                 if (tmpvalue.Trim().Equals("")) return null;
-                return System.Convert.ToInt32(tmpvalue); 
+                return System.Convert.ToInt32(tmpvalue);
             }
             /// <summary>
             /// Convetit la valeur du champ en chaine de caractère en tenant compte type de donnée.
@@ -235,16 +243,24 @@ namespace llt.FileIO.ImportExport
             /// <returns>Chaine de caractère obtenu</returns>
             internal override string SetValue(object value)
             {
-                if (Debut == -1)
-                    return System.Convert.ToInt32(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                if (value != null && value != System.DBNull.Value)
+                {
+                    if (Debut == -1)
+                        return System.Convert.ToInt32(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    else
+                    {
+                        string tmpvalue = System.Convert.ToInt32(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        if (tmpvalue.Length > Longueur)
+                            throw new FileIOError(this.GetType().FullName, "La taille du nombre entier '" + tmpvalue + "' est trop grande (nombre de chiffre(s) maximum " + Longueur.ToString() + ")");
+                        else if (tmpvalue.Length < Longueur)
+                            tmpvalue = tmpvalue.PadLeft(Longueur - tmpvalue.Length, '0');
+                        return tmpvalue;
+                    }
+                }
                 else
                 {
-                    string tmpvalue = System.Convert.ToInt32(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    if (tmpvalue.Length > Longueur)
-                        throw new FileIOError(this.GetType().FullName, "La taille du nombre entier '" + tmpvalue + "' est trop grande (nombre de chiffre(s) maximum " + Longueur.ToString() + ")");
-                    else if (tmpvalue.Length < Longueur)
-                        tmpvalue = tmpvalue.PadLeft(Longueur - tmpvalue.Length, '0');
-                    return tmpvalue;
+                    if (Debut == -1) return "";
+                    else return (new StringBuilder(" ", Longueur)).ToString();
                 }
             }
         }
@@ -421,47 +437,55 @@ namespace llt.FileIO.ImportExport
             /// <returns>Chaine de caractère obtenu</returns>
             internal override string SetValue(object value)
             {
-                // Création de la partie entière et de la partie décimale
-                string tmpentiere = System.Decimal.Truncate(System.Convert.ToDecimal(value)).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                string tmpdecimale = (System.Convert.ToDecimal(value) - System.Decimal.Truncate(System.Convert.ToDecimal(value))).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                if (!tmpdecimale.Equals("0")) tmpdecimale = tmpdecimale.Substring(2);
-                else tmpdecimale = "";
-
-                // Conversion
-                if (Debut == -1)
+                if (value != null && value != System.DBNull.Value)
                 {
-                    if (!SepDecimale.Equals(Char.MinValue))
-                        return tmpentiere + (tmpdecimale.Equals("") ? "" : SepDecimale + tmpdecimale);
-                    else
+                    // Création de la partie entière et de la partie décimale
+                    string tmpentiere = System.Decimal.Truncate(System.Convert.ToDecimal(value)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    string tmpdecimale = (System.Convert.ToDecimal(value) - System.Decimal.Truncate(System.Convert.ToDecimal(value))).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    if (!tmpdecimale.Equals("0")) tmpdecimale = tmpdecimale.Substring(2);
+                    else tmpdecimale = "";
+
+                    // Conversion
+                    if (Debut == -1)
                     {
-                        if (LongueurEntier != -1)
-                        {
-                            if (tmpentiere.Length > LongueurEntier)
-                                throw new FileIOError(this.GetType().FullName, "La partie entiere '" + tmpentiere + "' est trop grande (nombre de chiffre(s) maximum " + LongueurEntier.ToString() + ")");
-                            else if (tmpentiere.Length < LongueurEntier)
-                                tmpentiere = tmpentiere.PadLeft(LongueurEntier - tmpentiere.Length, '0');
-                        }
+                        if (!SepDecimale.Equals(Char.MinValue))
+                            return tmpentiere + (tmpdecimale.Equals("") ? "" : SepDecimale + tmpdecimale);
                         else
                         {
-                            if (tmpdecimale.Length > LongueurDecimale)
-                                tmpdecimale = tmpdecimale.Substring(LongueurDecimale); // Pas d'erreur, simple perte de précision
-                            else if (tmpdecimale.Length < LongueurDecimale)
-                                tmpdecimale = tmpdecimale.PadRight(LongueurDecimale - tmpdecimale.Length, '0');
+                            if (LongueurEntier != -1)
+                            {
+                                if (tmpentiere.Length > LongueurEntier)
+                                    throw new FileIOError(this.GetType().FullName, "La partie entiere '" + tmpentiere + "' est trop grande (nombre de chiffre(s) maximum " + LongueurEntier.ToString() + ")");
+                                else if (tmpentiere.Length < LongueurEntier)
+                                    tmpentiere = tmpentiere.PadLeft(LongueurEntier - tmpentiere.Length, '0');
+                            }
+                            else
+                            {
+                                if (tmpdecimale.Length > LongueurDecimale)
+                                    tmpdecimale = tmpdecimale.Substring(LongueurDecimale); // Pas d'erreur, simple perte de précision
+                                else if (tmpdecimale.Length < LongueurDecimale)
+                                    tmpdecimale = tmpdecimale.PadRight(LongueurDecimale - tmpdecimale.Length, '0');
+                            }
+                            return tmpentiere + tmpdecimale;
                         }
-                        return tmpentiere + tmpdecimale;
+                    }
+                    else
+                    {
+                        if (tmpentiere.Length > LongueurEntier)
+                            throw new FileIOError(this.GetType().FullName, "La partie entiere '" + tmpentiere + "' est trop grande (nombre de chiffre(s) maximum " + LongueurEntier.ToString() + ")");
+                        else if (tmpentiere.Length < LongueurEntier)
+                            tmpentiere = tmpentiere.PadLeft(LongueurEntier - tmpentiere.Length, '0');
+                        if (tmpdecimale.Length > LongueurDecimale)
+                            tmpdecimale = tmpdecimale.Substring(LongueurDecimale); // Pas d'erreur, simple perte de précision
+                        else if (tmpdecimale.Length < LongueurDecimale)
+                            tmpdecimale = tmpdecimale.PadRight(LongueurDecimale - tmpdecimale.Length, '0');
+                        return tmpentiere + (SepDecimale.Equals(Char.MinValue) ? "" : SepDecimale.ToString()) + tmpdecimale;
                     }
                 }
                 else
                 {
-                    if (tmpentiere.Length > LongueurEntier)
-                        throw new FileIOError(this.GetType().FullName, "La partie entiere '" + tmpentiere + "' est trop grande (nombre de chiffre(s) maximum " + LongueurEntier.ToString() + ")");
-                    else if (tmpentiere.Length < LongueurEntier)
-                        tmpentiere = tmpentiere.PadLeft(LongueurEntier - tmpentiere.Length, '0');
-                    if (tmpdecimale.Length > LongueurDecimale)
-                        tmpdecimale = tmpdecimale.Substring(LongueurDecimale); // Pas d'erreur, simple perte de précision
-                    else if (tmpdecimale.Length < LongueurDecimale)
-                        tmpdecimale = tmpdecimale.PadRight(LongueurDecimale - tmpdecimale.Length, '0');
-                    return tmpentiere + (SepDecimale.Equals(Char.MinValue) ? "" : SepDecimale.ToString()) + tmpdecimale;
+                    if (Debut == -1) return "";
+                    else return (new StringBuilder(" ", Longueur).ToString());
                 }
             }
         }
@@ -567,67 +591,75 @@ namespace llt.FileIO.ImportExport
             /// <returns>Chaine de caractère obtenu</returns>
             internal override string SetValue(object value)
             {
-                // La valeur retourné
-                string tmpvalue="";
-                DateTime tmpdate=System.Convert.ToDateTime(value);
-                if (debutmct == null)
+                if (value != null && value != System.DBNull.Value)
                 {
-                    // Création de la liste des mots clés triés par position
-                    debutmct = new SortedDictionary<int, string>();
-                    // On enregistre que les mots clés utilisés
-                    foreach (KeyValuePair<string, int> kvp in debutmc)
+                    // La valeur retourné
+                    string tmpvalue = "";
+                    DateTime tmpdate = System.Convert.ToDateTime(value);
+                    if (debutmct == null)
                     {
-                        if (!kvp.Value.Equals(Int32.MinValue)) debutmct.Add(kvp.Value, kvp.Key);
-                    }
-                }
-                // Mémorisation de la clé précédente
-                KeyValuePair<int, string> kvpp = new KeyValuePair<int, string>(-1, "");
-                // Traitement de la date dans l'ordre
-                foreach (KeyValuePair<int,string> kvp in debutmct)
-                {
-                    // Détermine si on soit ajouter un séparateur
-                    if (kvpp.Value.Equals(""))
-                        kvpp = kvp;
-                    else
-                    {
-                        if (kvpp.Value.Substring(0, 1).Equals(kvp.Value.Substring(0, 1), StringComparison.CurrentCultureIgnoreCase))
+                        // Création de la liste des mots clés triés par position
+                        debutmct = new SortedDictionary<int, string>();
+                        // On enregistre que les mots clés utilisés
+                        foreach (KeyValuePair<string, int> kvp in debutmc)
                         {
-                            // Séparateur de date ou d'heure
-                            if (kvpp.Value.Substring(0, 1).Equals("d", StringComparison.CurrentCultureIgnoreCase))
-                                tmpvalue = tmpvalue + (SepDate.Equals(Char.MinValue) ? "" : SepDate.ToString());
-                            else
-                                tmpvalue = tmpvalue + (SepHeure.Equals(Char.MinValue) ? "" : SepHeure.ToString());
+                            if (!kvp.Value.Equals(Int32.MinValue)) debutmct.Add(kvp.Value, kvp.Key);
                         }
-                        else
-                            // Séparateur date et heure
-                            tmpvalue = tmpvalue + (SepDateHeure.Equals(Char.MinValue) ? "" : SepDateHeure.ToString());
                     }
-                    // Traitement du mot clé
-                    switch (kvp.Value)
+                    // Mémorisation de la clé précédente
+                    KeyValuePair<int, string> kvpp = new KeyValuePair<int, string>(-1, "");
+                    // Traitement de la date dans l'ordre
+                    foreach (KeyValuePair<int, string> kvp in debutmct)
                     {
-                        case "dj":
-                            tmpvalue = tmpvalue + (tmpdate.Day.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
-                            break;
-                        case "dm":
-                            tmpvalue = tmpvalue + (tmpdate.Day.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
-                            break;
-                        case "da":
-                            if (longueurda == 4) tmpvalue = tmpvalue + tmpdate.Year.ToString();
-                            else tmpvalue = tmpvalue + tmpdate.Year.ToString().Substring(2);
-                            break;
-                        case "hh":
-                            tmpvalue = tmpvalue + tmpdate.Hour.ToString();
-                            break;
-                        case "hm":
-                            tmpvalue = tmpvalue + tmpdate.Minute.ToString();
-                            break;
-                        case "hs":
-                            tmpvalue = tmpvalue + tmpdate.Second.ToString();
-                            break;
+                        // Détermine si on soit ajouter un séparateur
+                        if (kvpp.Value.Equals(""))
+                            kvpp = kvp;
+                        else
+                        {
+                            if (kvpp.Value.Substring(0, 1).Equals(kvp.Value.Substring(0, 1), StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                // Séparateur de date ou d'heure
+                                if (kvpp.Value.Substring(0, 1).Equals("d", StringComparison.CurrentCultureIgnoreCase))
+                                    tmpvalue = tmpvalue + (SepDate.Equals(Char.MinValue) ? "" : SepDate.ToString());
+                                else
+                                    tmpvalue = tmpvalue + (SepHeure.Equals(Char.MinValue) ? "" : SepHeure.ToString());
+                            }
+                            else
+                                // Séparateur date et heure
+                                tmpvalue = tmpvalue + (SepDateHeure.Equals(Char.MinValue) ? "" : SepDateHeure.ToString());
+                        }
+                        // Traitement du mot clé
+                        switch (kvp.Value)
+                        {
+                            case "dj":
+                                tmpvalue = tmpvalue + (tmpdate.Day.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
+                                break;
+                            case "dm":
+                                tmpvalue = tmpvalue + (tmpdate.Day.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
+                                break;
+                            case "da":
+                                if (longueurda == 4) tmpvalue = tmpvalue + tmpdate.Year.ToString();
+                                else tmpvalue = tmpvalue + tmpdate.Year.ToString().Substring(2);
+                                break;
+                            case "hh":
+                                tmpvalue = tmpvalue + tmpdate.Hour.ToString();
+                                break;
+                            case "hm":
+                                tmpvalue = tmpvalue + tmpdate.Minute.ToString();
+                                break;
+                            case "hs":
+                                tmpvalue = tmpvalue + tmpdate.Second.ToString();
+                                break;
+                        }
                     }
+                    // Renvoie date et/ou heure mise en forme
+                    return tmpvalue;
                 }
-                // Renvoie date et/ou heure mise en forme
-                return tmpvalue;
+                else
+                {
+                    if (Debut == -1) return "";
+                    else return (new StringBuilder(" ", Longueur).ToString());
+                }
             }
 
             /// <summary>
@@ -840,7 +872,8 @@ namespace llt.FileIO.ImportExport
             /// <returns>Chaine de caractère obtenu</returns>
             internal override string SetValue(object value)
             {
-                return value.ToString();
+                if (value != null && value != System.DBNull.Value) return value.ToString();
+                else return "";
             }
         }
 

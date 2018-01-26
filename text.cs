@@ -627,53 +627,59 @@ namespace llt.FileIO
             if (culture == null) culture = System.Globalization.CultureInfo.CurrentCulture;
 
             // Création du buffer.
-            System.Collections.Generic.List<_ENREG> enrs;
-            if (NomChamp)
-                enrs = new List<_ENREG>(dt.Rows.Count + 1);
-            else
-                enrs = new List<_ENREG>(dt.Rows.Count);
-            int enrsLength = 0;
-
-            // Le premier enregistrement, le nom des champs
-            string[] nc = new string[dt.Columns.Count];
-            if (NomChamp)
+            try
             {
-                for (int ic = 0; ic < dt.Columns.Count; ic++)
-                    nc[ic] = dt.Columns[ic].ColumnName;
-                enrs.Add(new _ENREG((string[])nc.Clone()));
-                enrsLength += enrs[0].Length +
-                    (ChampSep.Length > 0 && enrs[0].Champs.Length > 2 ? enrs[0].Champs.Length - 1 : 0) +
-                    (ChampDel.Length > 0 ? enrs[0].Champs.Length * 2 : 0);
-            }
+                System.Collections.Generic.List<_ENREG> enrs;
+                if (NomChamp)
+                    enrs = new List<_ENREG>(dt.Rows.Count + 1);
+                else
+                    enrs = new List<_ENREG>(dt.Rows.Count);
+                int enrsLength = 0;
 
-            // Traitement de l'ensemble des enregistrements.
-            for (int ir = 0; ir < dt.Rows.Count; ir++)
+                // Le premier enregistrement, le nom des champs
+                string[] nc = new string[dt.Columns.Count];
+                if (NomChamp)
+                {
+                    for (int ic = 0; ic < dt.Columns.Count; ic++)
+                        nc[ic] = dt.Columns[ic].ColumnName;
+                    enrs.Add(new _ENREG((string[])nc.Clone()));
+                    enrsLength += enrs[0].Length +
+                        (ChampSep.Length > 0 && enrs[0].Champs.Length > 2 ? enrs[0].Champs.Length - 1 : 0) +
+                        (ChampDel.Length > 0 ? enrs[0].Champs.Length * 2 : 0);
+                }
+
+                // Traitement de l'ensemble des enregistrements.
+                for (int ir = 0; ir < dt.Rows.Count; ir++)
+                {
+                    for (int ic = 0; ic < nc.Length; ic++)
+                    {
+                        if (dt.Rows[ir][ic] is System.DBNull || dt.Rows[ir][ic] == null)
+                            nc[ic] = "";
+                        else
+                            nc[ic] = System.Convert.ToString(dt.Rows[ir][ic], culture);
+                    }
+                    enrs.Add(new _ENREG((string[])nc.Clone()));
+                    enrsLength += enrs[enrs.Count - 1].Length +
+                        (ChampSep.Length > 0 && enrs[enrs.Count - 1].Champs.Length > 2 ? enrs[enrs.Count - 1].Champs.Length - 1 : 0) +
+                        (ChampDel.Length > 0 ? enrs[enrs.Count - 1].Champs.Length * 2 : 0);
+
+                    // Si on approche la taille du buffer, on lance une écriture
+                    // NOTA : la valeur de 90% est empirique
+                    if ((enrsLength * TextCodage.GetByteCount(" ") + EnrSep.Length * enrs.Count) > (nbbyteio * .9))
+                    {
+                        WriteFile(enrs);
+                        enrs.Clear();
+                        enrsLength = 0;
+                    }
+                }
+
+                // Ecriture dans le fichier.
+                WriteFile(enrs);
+            }
+            finally
             {
-                for (int ic = 0; ic < nc.Length; ic++)
-                {
-                    if (dt.Rows[ir][ic] is System.DBNull || dt.Rows[ir][ic] == null)
-                        nc[ic] = "";
-                    else
-                        nc[ic] = System.Convert.ToString(dt.Rows[ir][ic], culture);
-                }
-                enrs.Add(new _ENREG((string[])nc.Clone()));
-                enrsLength += enrs[enrs.Count - 1].Length +
-                    (ChampSep.Length > 0 && enrs[enrs.Count - 1].Champs.Length > 2 ? enrs[enrs.Count - 1].Champs.Length - 1 : 0) +
-                    (ChampDel.Length > 0 ? enrs[enrs.Count - 1].Champs.Length * 2 : 0);
-
-                // Si on approche la taille du buffer, on lance une écriture
-                // NOTA : la valeur de 90% est empirique
-                if ((enrsLength * TextCodage.GetByteCount(" ") + EnrSep.Length * enrs.Count) > (nbbyteio * .9))
-                {
-                    WriteFile(enrs);
-                    enrs.Clear();
-                    enrsLength = 0;
-                }
+                WaitAllIO();
             }
-
-            // Ecriture dans le fichier.
-            WriteFile(enrs);
-            WaitAllIO();
         }
         /// <summary>
         /// Attend que tous les entrèes/sorties soient effectuées

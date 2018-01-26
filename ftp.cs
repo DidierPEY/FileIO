@@ -161,6 +161,9 @@ namespace llt.FileIO
         {
             try
             {
+                // Si fichier source non trouvé, pas de traitement
+                if (!ExistFile(localTOserveur, fichier)) return false;
+
                 // Test si le fichier destination existe.
                 if (ExistFile(!localTOserveur, fichier))
                 {

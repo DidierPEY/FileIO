@@ -193,14 +193,24 @@ namespace llt.FileIO.ImportExport
         /// <param name="dsImport">Le DataSet contenant les tables</param>
         public void ImportFichier(DataSet dsImport)
         {
-            ImportFichier(dsImport, fichier.Nom);
+            ImportFichier(dsImport, false);
+        }
+        /// <summary>
+        /// Importe dans le fichier définies dans le fichier XML les informations contenues dans la(les) table(s)
+        /// </summary>
+        /// <param name="dsImport">Le DataSet contenant les tables</param>
+        /// <param name="AjouteAuFichier">Si vrai, les enregistrements sont ajoutés à la fin du fichier</param>
+        public void ImportFichier(DataSet dsImport, bool AjouteAuFichier)
+        {
+            ImportFichier(dsImport, AjouteAuFichier, fichier.Nom);
         }
         /// <summary>
         /// Importe dans le fichier passé en paramètre les informations contenues dans la(les) table(s)
         /// </summary>
         /// <param name="dsImport">Le DataSet contenant la(les) table(s)</param>
+        /// <param name="AjouteAuFichier">Si vrai, les enregistrements sont ajoutés à la fin du fichier</param>
         /// <param name="FichierAImporter">{chemin\}NomDuFichier à utiliser pour l'immportation</param>
-        public void ImportFichier(DataSet dsImport, string FichierAImporter)
+        public void ImportFichier(DataSet dsImport, bool AjouteAuFichier, string FichierAImporter)
         {
             try
             {
@@ -222,7 +232,7 @@ namespace llt.FileIO.ImportExport
                         throw new FileIOError(this.GetType().FullName, "Le nom '" + FichierAImporter + "' ne doit pas être un répertoire");
                 }
                 // Le fichier ne doit pas exister
-                if (File.Exists(FichierAImporter))
+                if (File.Exists(FichierAImporter) && !AjouteAuFichier)
                     throw new FileIOError(this.GetType().FullName, "Le fichier '" + FichierAImporter + "' existe déja");
 
                 // Suppression des enregistrements dans toutes les tables.
@@ -241,7 +251,7 @@ namespace llt.FileIO.ImportExport
                 }
 
                 // Lance l'importation
-                import.Execute(FichierAImporter);
+                import.Execute(FichierAImporter,AjouteAuFichier);
             }
             catch (FileIOError)
             {
@@ -975,14 +985,14 @@ namespace llt.FileIO.ImportExport
             /// <summary>
             /// Importation
             /// </summary>
-            public void Execute(string ImporterFichier)
+            public void Execute(string ImporterFichier, bool AjouteAuFichier)
             {
                 // Le fichier ut6ilisé
                 TextFileIO txtFileIO = null;
                 try
                 {
                     // Ouverture du fichier en lecture/ecriture.
-                    txtFileIO = new TextFileIO(ImporterFichier, importFichier.Codage, importFichier.SepEnr, importFichier.SepChamp, importFichier.DelChamp, true);
+                    txtFileIO = new TextFileIO(ImporterFichier, importFichier.Codage, importFichier.SepEnr, importFichier.SepChamp, importFichier.DelChamp, true,AjouteAuFichier);
 
                     // Création liste enregistrements
                     if (Enregistrements == null) Enregistrements = new List<TextFileIO._ENREG>();
@@ -1007,7 +1017,10 @@ namespace llt.FileIO.ImportExport
                                 // MAJ des champs
                                 foreach (SegmentImport si in sit)
                                 {
-                                    si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref enreg);
+                                    if (!si.NomChampTable.StartsWith("="))
+                                        si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref enreg);
+                                    else
+                                        si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
                                 }
 
                                 // Ajout de l'enregistrement
@@ -1176,7 +1189,10 @@ namespace llt.FileIO.ImportExport
                             // MAJ des champs
                             foreach (SegmentImport si in sit)
                             {
-                                si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref crsenreg);
+                                if (!si.NomChampTable.StartsWith("="))
+                                    si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref crsenreg);
+                                else
+                                    si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref crsenreg);
                             }
 
                             // Chargement des champs pour les liens parents
@@ -1218,7 +1234,12 @@ namespace llt.FileIO.ImportExport
                 foreach (SegmentImport si in sit)
                 {
                     if (lf.Segment.Champs.Contains(si.ChampFichierMaj))
-                        si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref enreg);
+                    {
+                        if (!si.NomChampTable.StartsWith("="))
+                            si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref enreg);
+                        else
+                            si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
+                    }
                 }
 
                 // Traitement des dépendances

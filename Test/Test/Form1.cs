@@ -132,6 +132,13 @@ namespace llt.Test
                             txtDelChamp.Text.Equals("") ? ' ' : txtDelChamp.Text[0],
                             dt, chkNomChamp.Checked);
                         dgv.DataSource = dt;
+                        /*
+                        // Test WriteRows
+                        TextFileIO.WriteRows(txtFile2.Text + ".dbg", finenr,
+                            txtSepChamp.Text.Equals("") ? ' ' : txtSepChamp.Text[0],
+                            txtDelChamp.Text.Equals("") ? ' ' : txtDelChamp.Text[0],
+                            dt, chkNomChamp.Checked);
+                         */
                     }
                     catch (System.Exception eh)
                     {
@@ -188,8 +195,10 @@ namespace llt.Test
                     // Si traitement non effectué on sort.
                     DataSet h = dgvExport.DataSource as DataSet;
                     if (h == null) return;
+                    // Test valeur null
+                    h.Tables[0].Rows[0][2] = System.DBNull.Value;
                     // Lancement de l'exportation
-                    FileIO.ImportExport.Convert cv;
+                    FileIO.ImportExport.Convert cv;            
                     if (!txtXML2.Text.Equals(""))
                         cv = new llt.FileIO.ImportExport.Convert(FileIO.ImportExport.Convert.TypeSourceXMLEnum.FichierXML, txtXML2.Text);
                     else
@@ -197,7 +206,7 @@ namespace llt.Test
                     if (txtFicData2.Text.Equals(""))
                         cv.ImportFichier(h);
                     else
-                        cv.ImportFichier(h, txtFicData2.Text);
+                        cv.ImportFichier(h, false,txtFicData2.Text);
                 }
                 else if (sender.Equals(lstExport))
                 {
