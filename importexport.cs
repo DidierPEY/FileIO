@@ -123,8 +123,9 @@ namespace llt.FileIO.ImportExport
         /// <summary>
         /// Exporte les informations contenues dans le fichier vers les tables définies dans le fichier XML
         /// </summary>
+        /// <param name="errFichier">Si vrai, consigne les erreurs de conversion d'enregistrement dans un fichier</param>
         /// <remarks>Utilise le fichier spécifié dans la description XML</remarks>
-        public DataSet ExportTables()
+        public DataSet ExportTables(bool errFichier = false)
         {
             return ExportTables(fichier.Nom);
         }
@@ -132,8 +133,9 @@ namespace llt.FileIO.ImportExport
         /// <summary>
         /// Exporte les informations contenues dans le fichier vers les tables définies dans le fichier XML
         /// <param name="FichierAExporter">{chemin\}NomDuFichier à utiliser pour l'exportation</param>
+        /// <param name="errFichier">Si vrai, consigne les erreurs de conversion d'enregistrement dans un fichier</param>
         /// </summary>
-        public DataSet ExportTables(string FichierAExporter)
+        public DataSet ExportTables(string FichierAExporter, bool errFichier = false)
         {
             try
             {
@@ -167,7 +169,7 @@ namespace llt.FileIO.ImportExport
                 tables.dsInterne.Clear();
 
                 // Lance l'exportation
-                export.Execute(FichierAExporter);
+                export.Execute(FichierAExporter, errFichier);
 
                 // Renvoie une copie du DataSet
                 return tables.dsInterne.Copy();
@@ -283,6 +285,9 @@ namespace llt.FileIO.ImportExport
             private SegmentsExport Segments;
             // Le lien en cours
             private LienFichier crsLien;
+            // Liste des erreurs à consigner. 
+            // Dans ce cas, une erreur dans un enregistrement n'est pas bloquante
+            private List<TextFileIO._ENREG> listeErr;
 
             /// <summary>
             /// Mise en place des régles de correspodances à l'export
@@ -377,10 +382,18 @@ namespace llt.FileIO.ImportExport
             /// <summary>
             /// Exportation
             /// </summary>
-            public void Execute(string FichierAExporter)
+            /// <param name="FichierAExporter">Le fichier à traiter</param>
+            /// <param name="errFichier">Si vrai, consigne les erreurs de conversion d'enregistrement dans un fichier</param>
+            /// <remarks>
+            /// Si <paramref name="errFichier"/> est vrai, l'erreur de conversion d'enregistrement n'est pas bloquante
+            /// et le traitement continue.
+            /// </remarks>
+            public void Execute(string FichierAExporter, bool errFichier = false)
             {
-                // Le fichier ut6ilisé
+                // Le fichier utilisé
                 TextFileIO txtFileIO = null;
+                // Le fichier des erreurs.
+                TextFileIO txtErrFileIO = null;
                 // Pas de lien en cours
                 crsLien = null;
 
@@ -399,6 +412,12 @@ namespace llt.FileIO.ImportExport
                     // Attache l'évènement
                     txtFileIO.TextFileIOEvent += new TextFileIOEventHandler(trtLectureFaite);
 
+                    // Test si gestion des erreurs de conversion dans un fichier
+                    if (errFichier)
+                        listeErr = new List<TextFileIO._ENREG>();
+                    else
+                        listeErr = null;
+
                     // Démarrage de l'exportation.
                     txtFileIO.ReadFileSeq();
 
@@ -409,6 +428,31 @@ namespace llt.FileIO.ImportExport
                     // MAJ des derniers enregistrements
                     if (exportTables.Liens.Count > 0)
                         exportTables.Liens.majEnregistrements();
+
+                    // Création du fichier des erreurs de conversion
+                    if (errFichier && listeErr.Count > 0)
+                    {
+                        try
+                        {
+                            string nomerr = FichierAExporter + ".err";
+                            if (File.Exists(nomerr)) File.Delete(nomerr);
+                            txtErrFileIO = new TextFileIO(nomerr, exportFichier.Codage, exesepenr, exportFichier.SepChamp, exportFichier.DelChamp, true);
+                            txtErrFileIO.WriteFile(listeErr);
+                            txtErrFileIO.WaitAllIO();
+                        }
+                        catch { }
+                        finally
+                        {
+                            // Fermeture du fichier 
+                            if (txtErrFileIO != null)
+                            {
+                                txtErrFileIO.Dispose();
+                                txtErrFileIO = null;
+                            }
+                            listeErr.Clear();
+                            listeErr = null;
+                        }
+                    }
                 }
                 catch (FileIOError)
                 {
@@ -822,9 +866,21 @@ namespace llt.FileIO.ImportExport
                     }
 
                     // MAJ des champs
-                    foreach (SegmentExport se in ses)
+                    try
                     {
-                        MajChamp(dr, enr, se);
+                        foreach (SegmentExport se in ses)
+                        {
+                            MajChamp(dr, enr, se);
+                        }
+                    }
+                    catch (FileIOError eh)
+                    {
+                        // Si l'erreur n'est pas consignée dans un fichier, on sort en erreur
+                        if (listeErr == null) throw;
+                        // Ajoute l'nregistrement aux erreurs.
+                        listeErr.Add(new TextFileIO._ENREG(new string[] { eh.Message }));
+                        // On sort sans erreur
+                        return;
                     }
 
                     // Ajout de l'enregistrement

@@ -169,7 +169,7 @@ namespace llt.Test
                     if (txtFicData.Text.Equals(""))
                         h = cv.ExportTables();
                     else
-                        h = cv.ExportTables(txtFicData.Text);
+                        h = cv.ExportTables(txtFicData.Text, true);
                     // On consigne le résultat
                     if (h == null || h.Tables.Count == 0)
                     {
