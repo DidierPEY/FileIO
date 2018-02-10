@@ -126,8 +126,8 @@ namespace llt.Test
                     DataTable dt = new DataTable();
                     try
                     {
-                        string finenr = TextFileIO.GetEnrSepText(txtFile2.Text, Encoding.Default);
-                        TextFileIO.ChgRows(txtFile2.Text, Encoding.Default, finenr,
+                        string finenr = TextFileIO.GetEnrSepText(txtFile2.Text, Encoding.UTF8);
+                        TextFileIO.ChgRows(txtFile2.Text, Encoding.UTF8, finenr,
                             txtSepChamp.Text.Equals("") ? ' ' : txtSepChamp.Text[0],
                             txtDelChamp.Text.Equals("") ? ' ' : txtDelChamp.Text[0],
                             dt, chkNomChamp.Checked);

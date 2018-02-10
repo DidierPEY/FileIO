@@ -635,7 +635,7 @@ namespace llt.FileIO.ImportExport
                                 tmpvalue = tmpvalue + (tmpdate.Day.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
                                 break;
                             case "dm":
-                                tmpvalue = tmpvalue + (tmpdate.Day.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
+                                tmpvalue = tmpvalue + (tmpdate.Month.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
                                 break;
                             case "da":
                                 if (longueurda == 4) tmpvalue = tmpvalue + tmpdate.Year.ToString();
@@ -799,17 +799,19 @@ namespace llt.FileIO.ImportExport
                 {
                     if (formatchamp.Substring(debutd).StartsWith("da["))
                     {
+                        // Si la date commence par da[x], le séparateur de date se trouve forcément 5 caractères plus loin. 
                         if (formatchamp[debutd + 5].Equals('d'))
                             SepDate = Char.MinValue;
                         else
-                            SepDate = formatchamp[formatchamp.IndexOf(']', debutd) + 5];
+                            SepDate = formatchamp[debutd + 5];
                     }
                     else
                     {
+                        // Si la date ne commence pas par da[x], le séparateur de date se trouve forcément 2 caractères plus loin
                         if (formatchamp[debutd + 2].Equals('d'))
                             SepDate = Char.MinValue;
                         else
-                            SepDate = formatchamp[formatchamp.IndexOf(']', debutd) + 1];
+                            SepDate = formatchamp[debutd + 2];
                     }
                 }
                 // Détermination du sépareur de l'heure
