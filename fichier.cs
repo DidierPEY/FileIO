@@ -635,7 +635,7 @@ namespace llt.FileIO.ImportExport
                                 tmpvalue = tmpvalue + (tmpdate.Day.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
                                 break;
                             case "dm":
-                                tmpvalue = tmpvalue + (tmpdate.Month.ToString().Length == 2 ? "" : "0") + tmpdate.Day.ToString();
+                                tmpvalue = tmpvalue + (tmpdate.Month.ToString().Length == 2 ? "" : "0") + tmpdate.Month.ToString();
                                 break;
                             case "da":
                                 if (longueurda == 4) tmpvalue = tmpvalue + tmpdate.Year.ToString();

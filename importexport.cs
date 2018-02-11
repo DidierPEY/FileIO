@@ -87,11 +87,11 @@ namespace llt.FileIO.ImportExport
 
                 // Recherche de l'élèment fichier.
                 nl = Regles.DocumentElement.GetElementsByTagName("fichier");
-                if (nl.Count==0)
+                if (nl.Count == 0)
                     throw new FileIOError(this.GetType().FullName, "L'élèment <fichier> n'existe pas.");
-                if (nl.Count>1)
+                if (nl.Count > 1)
                     throw new FileIOError(this.GetType().FullName, "Un seul élément <fichier> doit être présent dans <description>.");
-                
+
                 // Création de l'objet fichier
                 fichier = new Fichier(nl[0]);
 
@@ -249,11 +249,51 @@ namespace llt.FileIO.ImportExport
                     if (nl.Count > 1)
                         throw new FileIOError(this.GetType().FullName, "Un seul élément <import> doit être présent dans <description>.");
                     // Création de objet export
-                    import = new Import(nl[0], fichier, tables,dsImport);
+                    import = new Import(nl[0], fichier, tables, dsImport);
+                }
+
+                // Chargement des enregistrements dans le dataset interne en tenant compte des segments virtuels
+                foreach (DataTable dt in tables.dsInterne.Tables)
+                {
+                    // Les enregistrement à importer
+                    DataRow[] dris = null;
+
+                    // S'agit-il d'un segment virtuel
+                    if (dt.ExtendedProperties.Contains("virtuelde"))
+                        dris = dsImport.Tables[dt.ExtendedProperties["virtuelde"].ToString()].Select(dt.ExtendedProperties["si"].ToString());
+                    else
+                    {
+                        // Un ou plusieurs segment tabme virtuel dépend de ce segment table
+                        DataTable[] segsVirtuel = tables.getSEGVirtuel(dt.TableName);
+                        if (segsVirtuel.Length == 0)
+                            dris = dsImport.Tables[dt.TableName].Select();
+                        else
+                        {
+                            // On exclu tous les enregistrements du ou des segments virtuels
+                            string si = "";
+                            foreach (DataTable dtv in segsVirtuel)
+                            {
+                                if (!si.Equals("")) si = si + " or ";
+                                si = si + "(" + dtv.ExtendedProperties["si"].ToString() + ")";
+                            }
+                            si = "not (" + si + ")";
+                            // Chargement des enregistrements à importer
+                            dris = dsImport.Tables[dt.TableName].Select(si);
+                        }
+                    }
+
+                    // Création des enregistrements dans le datatable interne
+                    foreach (DataRow dri in dris)
+                    {
+                        DataRow dr = dt.NewRow();
+                        foreach (DataColumn dc in dt.Columns)
+                            dr[dc] = dri[dc.ColumnName];
+                        dt.Rows.Add(dr);
+                    }
                 }
 
                 // Lance l'importation
-                import.Execute(FichierAImporter,AjouteAuFichier);
+                import.Execute(FichierAImporter, AjouteAuFichier);
             }
             catch (FileIOError)
             {
@@ -300,14 +340,14 @@ namespace llt.FileIO.ImportExport
                 // Test des paramètres
                 if (fichier == null)
                     throw new FileIOError(this.GetType().FullName, "Aucun fichier n'est défini");
-                if (tables==null)
+                if (tables == null)
                     throw new FileIOError(this.GetType().FullName, "Aucune table n'est définie");
                 exportFichier = fichier;
                 exportTables = tables;
 
                 // Création de la liste des segments exports
                 Segments = new SegmentsExport();
-                
+
                 // Traitement des différents noeuds dépendant de fichier.
                 foreach (System.Xml.XmlNode noeud in xn.ChildNodes)
                 {
@@ -681,7 +721,7 @@ namespace llt.FileIO.ImportExport
                     else sf.EnregChampMemo = enr;
                 }
             }
-            
+
             /// <summary>
             /// Indique si le segment trouvé dans le fichier est conforme par rapport aux liens.
             /// </summary>
@@ -856,7 +896,7 @@ namespace llt.FileIO.ImportExport
                     // Création d'un nouvel enregistrement
                     if (exportTables.dsInterne.Tables[0].Rows.Count == 0 || exportFichier.Liens.Count == 0)
                         dr = exportTables.dsInterne.Tables[0].NewRow();
-                    else 
+                    else
                     {
                         // Si multi-segment fichier, il faut vérifier que ce segment déclenche la création d'enregistrement
                         if (CreEnregistrement(exportTables.dsInterne.Tables[0].TableName))
@@ -965,9 +1005,9 @@ namespace llt.FileIO.ImportExport
                 // Test des paramètres
                 if (fichier == null)
                     throw new FileIOError(this.GetType().FullName, "Aucun fichier n'est défini");
-                if (tables==null)
+                if (tables == null)
                     throw new FileIOError(this.GetType().FullName, "Aucune table n'est définie");
-                if (ds==null)
+                if (ds == null)
                     throw new FileIOError(this.GetType().FullName, "Aucun dataset n'est définie");
                 importFichier = fichier;
                 importTables = tables;
@@ -986,58 +1026,18 @@ namespace llt.FileIO.ImportExport
                             throw new FileIOError(this.GetType().FullName, "La table '" + dt.TableName + "' ne contient pas le champ '" + dc.ColumnName + "'");
                     }
                 }
-                
+
                 // Création de la liste des segments imports
                 Segments = new SegmentsImport();
-                
+
                 // Traitement des différents noeuds dépendant de fichier.
                 foreach (System.Xml.XmlNode noeud in xn.ChildNodes)
                 {
                     // Traitement des segments.
                     if (noeud.Name.ToLower().Equals("segment")) CreSEG(noeud);
                 }
-
-                // Chargement des enregistrements dans le dataset interne en tenant compte des segments virtuels
-                foreach (DataTable dt in importTables.dsInterne.Tables)
-                {
-                    // Les enregistrement à importer
-                    DataRow[] dris = null;
-
-                    // S'agit-il d'un segment virtuel
-                    if (dt.ExtendedProperties.Contains("virtuelde"))
-                        dris = ds.Tables[dt.ExtendedProperties["virtuelde"].ToString()].Select(dt.ExtendedProperties["si"].ToString());
-                    else
-                    {
-                        // Un ou plusieurs segment tabme virtuel dépend de ce segment table
-                        DataTable[] segsVirtuel = importTables.getSEGVirtuel(dt.TableName);
-                        if (segsVirtuel.Length == 0)
-                            dris = ds.Tables[dt.TableName].Select();
-                        else
-                        {
-                            // On exclu tous les enregistrements du ou des segments virtuels
-                            string si = "";
-                            foreach (DataTable dtv in segsVirtuel)
-                            {
-                                if (!si.Equals("")) si = si + " or ";
-                                si = si + "(" + dtv.ExtendedProperties["si"].ToString() + ")";
-                            }
-                            si = "not (" + si + ")";
-                            // Chargement des enregistrements à importer
-                            dris = ds.Tables[dt.TableName].Select(si);
-                        }
-                    }
-                    
-                    // Création des enregistrements dans le datatable interne
-                    foreach (DataRow dri in dris)
-                    {
-                        DataRow dr = dt.NewRow();
-                        foreach (DataColumn dc in dt.Columns)
-                            dr[dc] = dri[dc.ColumnName];
-                        dt.Rows.Add(dr);
-                    }
-                }
             }
-            
+
             /// <summary>
             /// Importation
             /// </summary>
@@ -1048,7 +1048,7 @@ namespace llt.FileIO.ImportExport
                 try
                 {
                     // Ouverture du fichier en lecture/ecriture.
-                    txtFileIO = new TextFileIO(ImporterFichier, importFichier.Codage, importFichier.SepEnr, importFichier.SepChamp, importFichier.DelChamp, true,AjouteAuFichier);
+                    txtFileIO = new TextFileIO(ImporterFichier, importFichier.Codage, importFichier.SepEnr, importFichier.SepChamp, importFichier.DelChamp, true, AjouteAuFichier);
 
                     // Création liste enregistrements
                     if (Enregistrements == null) Enregistrements = new List<TextFileIO._ENREG>();
@@ -1139,7 +1139,7 @@ namespace llt.FileIO.ImportExport
                     {
                         // Recherche des tables racines
                         LienTables[] lfr = importTables.Liens.getLiens((LienTables)null);
- 
+
                         // Traitement de toutes les tables racines 
                         for (int i = 0; i < lfr.Length; i++)
                         {
@@ -1174,7 +1174,7 @@ namespace llt.FileIO.ImportExport
                                 }
                             }
                         }
-                        
+
                         // Non supporté pour l'instant
                         throw new FileIOError(this.GetType().FullName, "Format d'export non supporté");
                     }
@@ -1320,8 +1320,8 @@ namespace llt.FileIO.ImportExport
                 foreach (System.Xml.XmlAttribute xa in xn.Attributes)
                 {
                     if (xa.Name.ToLower().Equals("nom") && !xa.Value.Equals(""))
-                            nomsegment = xa.Value.Trim();
-                    else if (xa.Name.ToLower().Equals("virtuel")&& !xa.Value.Equals(""))
+                        nomsegment = xa.Value.Trim();
+                    else if (xa.Name.ToLower().Equals("virtuel") && !xa.Value.Equals(""))
                         segmentvirtuel = xa.Value.Trim();
                     else if (xa.Name.ToLower().Equals("si") && !xa.Value.Equals(""))
                         si = xa.Value.Trim();
@@ -1419,7 +1419,7 @@ namespace llt.FileIO.ImportExport
                 LienFichier[] lfs = importFichier.Liens.getLiens(dependde);
                 if (lfs.Length == 0) return;
                 // Des champs du segment supérieurs parent sont-il mis à jour.
-                bool segsup = (Segments.getImports(dt, dependde.Segment).Length == 0); 
+                bool segsup = (Segments.getImports(dt, dependde.Segment).Length == 0);
 
                 // Pour chaque dépendance
                 foreach (LienFichier lf in lfs)
@@ -1588,7 +1588,7 @@ namespace llt.FileIO.ImportExport
                             }
                             else
                                 corr[ic - icf] = tmpc[ic];
-                        }                       
+                        }
                     }
                 }
                 // Test si le nombre d'intération est correcte
@@ -1786,7 +1786,7 @@ namespace llt.FileIO.ImportExport
                             }
                             else
                                 corr[ic - icf] = tmpc[ic];
-                        }                       
+                        }
                     }
                 }
                 // Test si le nombre d'intération est correcte
