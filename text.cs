@@ -109,7 +109,7 @@ namespace llt.FileIO
         /// de fin d'enregistrement utilisés sont CR/LF
         /// </summary>
         /// <param name="nomfichier">Le nom du fichier respectant les régles de nommage du système d'explotation</param>
-        /// <param name="codage">Le codage à utiliser pour transcrire byte en caractère et inversement</param>
+        /// <param name="codage">Le codage à utiliser pour transcrire de byte(s) en caractère et inversement</param>
         public TextFileIO(string nomfichier, System.Text.Encoding codage)
             : this(nomfichier, codage, "\r\n", ' ', ' ')
         {
@@ -118,7 +118,7 @@ namespace llt.FileIO
         /// Création de l'objet pour l'accès au fichier en lecture seule.
         /// </summary>
         /// <param name="nomfichier">Le nom du fichier respectant les régles de nommage du système d'explotation</param>
-        /// <param name="codage">Le codage à utiliser pour transcrire byte en caractère et inversement</param>
+        /// <param name="codage">Le codage à utiliser pour transcrire de byte(s) en caractère et inversement</param>
         /// <param name="finenr">Le(s) caractère(s) de fin d'enregistrement</param>
         /// <param name="champsep">Le séparateur de champ</param>
         /// <param name="champdel">Le délimitateur de champ</param>
@@ -130,7 +130,7 @@ namespace llt.FileIO
         /// Création de l'objet pour l'accès au fichier. 
         /// </summary>
         /// <param name="nomfichier">Le nom du fichier respectant les régles de nommage du système d'explotation</param>
-        /// <param name="codage">Le codage à utiliser pour transcrire byte en caractère et inversement</param>
+        /// <param name="codage">Le codage à utiliser pour transcrire de byte(s) en caractère et inversement</param>
         /// <param name="finenr">Le(s) caractère(s) de fin d'enregistrement</param>
         /// <param name="champsep">Le séparateur de champ</param>
         /// <param name="champdel">Le délimitateur de champ</param>
@@ -143,7 +143,7 @@ namespace llt.FileIO
         /// Création de l'objet pour l'accès au fichier. 
         /// </summary>
         /// <param name="nomfichier">Le nom du fichier respectant les régles de nommage du système d'explotation</param>
-        /// <param name="codage">Le codage à utiliser pour transcrire byte en caractère et inversement</param>
+        /// <param name="codage">Le codage à utiliser pour transcrire de byte(s) en caractère et inversement</param>
         /// <param name="finenr">Le(s) caractère(s) de fin d'enregistrement</param>
         /// <param name="champsep">Le séparateur de champ</param>
         /// <param name="champdel">Le délimitateur de champ</param>
@@ -345,7 +345,7 @@ namespace llt.FileIO
         /// <param name="champdel">Le délimitateur de champ</param>
         /// <param name="dt">L'objet DataTable utiliser pour créer le fichier</param>
         /// <param name="nomchamp">Indique si le premier enregistrement doti contenir les noms de champ</param>
-        /// <remarks>Tous les champs sont convertit en chaine de caractère en utilisant la culture en cours</remarks>
+        /// <remarks>Tous les champs sont convertit en chaine de caractère en utilisant la culture en cours et son TextInfo.ANSICodePage associé</remarks>
         public static void WriteRows(string nomfichier, string finenr, char champsep, char champdel, System.Data.DataTable dt, bool nomchamp)
         {
             WriteRows(nomfichier, finenr, champsep, champdel, dt, nomchamp, System.Globalization.CultureInfo.CurrentCulture);
@@ -359,7 +359,7 @@ namespace llt.FileIO
         /// <param name="champdel">Le délimitateur de champ</param>
         /// <param name="dt">L'objet DataTable utiliser pour créer le fichier</param>
         /// <param name="nomchamp">Indique si le premier enregistrement doti contenir les noms de champ</param>
-        /// <param name="culture">Culture utilisée pour effectué la conversion des champs e chaine de caractères</param>
+        /// <param name="culture">Culture utilisée et son TextInfo.ANSICodePage associé pour effectuer la conversion des champs en chaine de caractères</param>
         public static void WriteRows(string nomfichier, string finenr, char champsep, char champdel, System.Data.DataTable dt, bool nomchamp, System.Globalization.CultureInfo culture)
         {
             WriteRows(nomfichier, finenr, champsep, champdel, dt, nomchamp, culture, false);
@@ -373,21 +373,36 @@ namespace llt.FileIO
         /// <param name="champdel">Le délimitateur de champ</param>
         /// <param name="dt">L'objet DataTable utiliser pour créer le fichier</param>
         /// <param name="nomchamp">Indique si le premier enregistrement doti contenir les noms de champ</param>
-        /// <param name="culture">Culture utilisée pour effectué la conversion des champs e chaine de caractères</param>
+        /// <param name="culture">Culture utilisée et son TextInfo.ANSICodePage associé pour effectué la conversion des champs en chaine de caractères</param>
         /// <param name="appendmode">Ajoute les enregistrements à la fin du fichier</param>
         public static void WriteRows(string nomfichier, string finenr, char champsep, char champdel, System.Data.DataTable dt, bool nomchamp, System.Globalization.CultureInfo culture, bool appendmode)
+        {
+            WriteRows(nomfichier, finenr, champsep, champdel, dt, nomchamp, culture, appendmode, System.Text.Encoding.GetEncoding(culture.TextInfo.ANSICodePage));
+        }
+        /// <summary>
+        /// Ecrit dans le fichier le contenu d'une table.
+        /// </summary>
+        /// <param name="nomfichier">Le nom du fichier respectant les régles de nommage du système d'explotation</param>
+        /// <param name="finenr">Le(s) caractère(s) de fin d'enregistrement</param>
+        /// <param name="champsep">Le séparateur de champ</param>
+        /// <param name="champdel">Le délimitateur de champ</param>
+        /// <param name="dt">L'objet DataTable utiliser pour créer le fichier</param>
+        /// <param name="nomchamp">Indique si le premier enregistrement doti contenir les noms de champ</param>
+        /// <param name="culture">Culture utilisée pour effectué la conversion des champs en chaine de caractères</param>
+        /// <param name="appendmode">Ajoute les enregistrements à la fin du fichier</param>
+        /// <param name="codage">Le codage spécifique à utiliser pour le format de chaine de caractères</param>
+        public static void WriteRows(string nomfichier, string finenr, char champsep, char champdel, System.Data.DataTable dt, bool nomchamp, System.Globalization.CultureInfo culture, bool appendmode, System.Text.Encoding codage)
         {
             // La table doit être présente
             if (dt == null)
                 throw new FileIOError("WriteRows", "Il faut un objet DataTable valide.");
             // Pour écrite dans le fichier.
-            TextFileIO tfio = new TextFileIO(nomfichier, System.Text.Encoding.GetEncoding(culture.TextInfo.ANSICodePage), finenr, champsep, champdel, true, appendmode);
+            TextFileIO tfio = new TextFileIO(nomfichier, codage, finenr, champsep, champdel, true, appendmode);
             // Lancement de l'écriture
             tfio.WriteRows(dt, nomchamp, culture);
             // Fermeture du fichier
             tfio.Dispose();
         }
-
         /// <summary>
         /// Chargement de la table lors de la lecture du fichier
         /// </summary>
