@@ -37,6 +37,24 @@ namespace llt.FileIO
         }
 
         /// <summary>
+        /// Liste des options pour le remplacement du fichier destination
+        /// </summary>
+        public enum _OWRFICHIERDESTINATION : short
+        {
+            /// <summary>
+            /// Le fichier destination n'est jamais remplacé
+            /// </summary>
+            non,
+            /// <summary>
+            /// Le fichier destination est systématiquement remplacé
+            /// </summary>
+            oui,
+            /// <summary>
+            /// Le fichier destination est remplacé si le fichier source est plus récent
+            /// </summary>
+            siplusrecent
+        }
+        /// <summary>
         /// Nom du serveur ou adresse IP
         /// </summary>
         public string Serveur;
@@ -61,9 +79,9 @@ namespace llt.FileIO
         /// </summary>
         public string LocalPath;
         /// <summary>
-        /// Ecrase le fichier existant sur la destination lors de la copie
+        /// Règle de remplacement du fichier destination lors de la copie si il existe
         /// </summary>
-        public bool OWRFichierCopie;
+        public _OWRFICHIERDESTINATION OWRFichierDestination;
         /// <summary>
         /// Régle de suppression du fichier source
         /// </summary>
@@ -72,7 +90,8 @@ namespace llt.FileIO
         /// <summary>
         /// Nom de fichier utiliser pour l'opération de lecture asynchrone.
         /// </summary>
-        private string fichierasync;
+        //private string fichierasync;
+        private System.IO.Stream streamasync;
 
         /// <summary>
         /// Création de la classe en précisant uniquement le serveur FTP
@@ -100,7 +119,7 @@ namespace llt.FileIO
             ServeurPath = "";
             SupportKeepAlive = supportkeepalive;
             LocalPath = ".\\";
-            OWRFichierCopie = false;
+            OWRFichierDestination=_OWRFICHIERDESTINATION.non;
             DELFichierSource = _DELFICHIERSOURCE.non;
         }
 
@@ -141,13 +160,13 @@ namespace llt.FileIO
         /// </param>
         /// <param name="serveurpath">Le répertoire de travail sur le serveur FTP</param>
         /// <param name="localpath">Le répertoire de travail en local</param>
-        /// <param name="owrfichiercopie">Remplace le fichier destination si il existe</param>
+        /// <param name="owrfichierdestination">Régle de remplacement du fichier destination si il existe</param>
         /// <param name="delfichiersource">Régle de suppression du fichier source</param>
         public BasicFTP(string serveur, string utilisateur, string motdepasse,
-            bool supportkeepalive, string serveurpath, string localpath, bool owrfichiercopie, _DELFICHIERSOURCE delfichiersource)
+            bool supportkeepalive, string serveurpath, string localpath, _OWRFICHIERDESTINATION owrfichierdestination, _DELFICHIERSOURCE delfichiersource)
             : this(serveur, utilisateur, motdepasse, supportkeepalive, serveurpath, localpath)
         {
-            OWRFichierCopie = owrfichiercopie;
+            OWRFichierDestination = owrfichierdestination;
             DELFichierSource = delfichiersource;
         }
 
@@ -168,7 +187,7 @@ namespace llt.FileIO
                 if (ExistFile(!localTOserveur, fichier))
                 {
                     // Si on n'écrase pas le fichier destination
-                    if (!OWRFichierCopie)
+                    if (OWRFichierDestination.Equals(_OWRFICHIERDESTINATION.non))
                     {
                         // Si on supprime le fichier source s' il existe sur la destination,
                         // on effectue la suppression et considère que la copie est faite.
@@ -180,10 +199,39 @@ namespace llt.FileIO
                         else
                             return false;
                     }
+                    // Suppression du fichier sur la destination systématique
+                    else if (OWRFichierDestination.Equals(_OWRFICHIERDESTINATION.oui))
+                    {
+                        DelFile(!localTOserveur, fichier);
+                    }
+                    // Suppression du fichier destination uniquement si le fichier source est plus récent.
                     else
                     {
-                        // Suppression du fichier sur la destination
-                        DelFile(!localTOserveur, fichier);
+                        // Recherche de la date du fichier sur le serveur FTP
+                        // L'objet permettant l'accès au serveur
+                        System.Net.FtpWebRequest fwr = CreFwr(fichier);
+                        fwr.Method = System.Net.WebRequestMethods.Ftp.GetDateTimestamp;
+                        // Exécute la requête.
+                        System.Net.FtpWebResponse fwp = (System.Net.FtpWebResponse)fwr.GetResponse();
+
+                        // Si le fichier source est plus récent que le fichier destination, on supprime ce dernier
+                        if (localTOserveur && System.IO.File.GetLastWriteTime(LocalPath + System.IO.Path.DirectorySeparatorChar + fichier) > fwp.LastModified ||
+                            !localTOserveur && System.IO.File.GetLastWriteTime(LocalPath + System.IO.Path.DirectorySeparatorChar + fichier) < fwp.LastModified)
+                        {
+                            DelFile(!localTOserveur, fichier);
+                        }
+                        else
+                        {
+                            // Si on supprime le fichier source s' il existe sur la destination,
+                            // on effectue la suppression et considère que la copie est faite.
+                            if (DELFichierSource.Equals(_DELFICHIERSOURCE.sicopieouexiste))
+                            {
+                                DelFile(localTOserveur, fichier);
+                                return true;
+                            }
+                            else
+                                return false;
+                        }
                     }
                 }
 
@@ -221,6 +269,7 @@ namespace llt.FileIO
             // Les objets permettant l'accès au serveur
             System.Net.FtpWebRequest fwr = null;
             System.Net.FtpWebResponse fwp = null;
+            streamasync = null;
 
             // L'objet permettant l'accès au fichier.
             BasicFileIO bfio = null;
@@ -232,11 +281,20 @@ namespace llt.FileIO
                 {
                     // Du fait du traitement asynchrone, il faut utiliser une
                     // variable avec une portée générale.
-                    fichierasync = fichier;
+                    //fichierasync = fichier;
+                    // L'objet permettant l'accès au serveur
+                    fwr = CreFwr(fichier);
+                    fwr.Method = System.Net.WebRequestMethods.Ftp.UploadFile;
+                    // Demande du stream d'écriture
+                    streamasync = fwr.GetRequestStream();
+                    
                     // Lecture de tout le fichier
                     bfio = new BasicFileIO(LocalPath + System.IO.Path.DirectorySeparatorChar + fichier, true);
                     bfio.BasicFileIOEvent += new BasicFileIOEventHandler(bfiocopyfile_BasicFileIOEvent);
                     bfio.ReadFileSeq(1048576);
+
+                    // Une fois terminé, on ferme le stream
+                    streamasync.Close();
                 }
                 else
                 {
@@ -256,17 +314,18 @@ namespace llt.FileIO
                         System.IO.Stream s = fwp.GetResponseStream();
                         if (s != null && s.CanRead)
                         {
-                            // Lecture par block de 1 mo
+                            // Lecture du stream
                             byte[] rBuffer = new byte[1048576];
+                            int rl = 0;
                             for (; ; )
                             {
-                                int rl = s.Read(rBuffer, 0, 1048576);
+                                rl = s.Read(rBuffer, rl, rl + rBuffer.Length);
                                 if (rl == 0) break;
                                 // Lancement de l'écriture
                                 bfio.WriteFile(rl, rBuffer);
                                 // Si le nombre d'octet est inférieur au nombre total demandé
                                 // on sort.
-                                if (rl < 1048576) break;
+                                if (rl < rBuffer.Length) break;
                             }
                         }
                         else
@@ -278,12 +337,14 @@ namespace llt.FileIO
                     // on attend que les IO soient terminée.
                     bfio.WaitAllIO();
                 }
-
-                // fermture du fichier.
-                bfio.Dispose();
             }
             finally
             {
+                if (streamasync != null)
+                {
+                    streamasync.Dispose();
+                    streamasync = null;
+                }
                 if (fwp != null)
                 {
                     try
@@ -314,6 +375,7 @@ namespace llt.FileIO
             {
                 if (e.NbIO > 0)
                 {
+                    /*
                     // Création de l'URI avec l'UriBuilder
                     UriBuilder urb = new UriBuilder();
                     urb.Scheme = "ftp";
@@ -325,16 +387,25 @@ namespace llt.FileIO
 
                     // L'objet permettant l'accès au serveur
                     System.Net.FtpWebRequest fwr = (System.Net.FtpWebRequest)System.Net.WebRequest.Create(urb.Uri + "/" + fichierasync);
+                     */
+                    /*
+                    // L'objet permettant l'accès au serveur
+                    System.Net.FtpWebRequest fwr = CreFwr(fichierasync);
                     fwr.Method = System.Net.WebRequestMethods.Ftp.AppendFile;
-                    fwr.UsePassive = true;
-                    fwr.UseBinary = true;
 
                     // Demande du stream d'écriture
                     System.IO.Stream s = fwr.GetRequestStream();
                     // Ecriture dans le stream
                     s.Write(e.IOBuffer, 0, e.NbIO);
+                    // Transfert sur le serveur FTP
+                    s.Flush();
                     // Fermeture du stream (opération obligatoire).
                     s.Close();
+                    */
+                    // Ecriture dans le stream
+                    streamasync.Write(e.IOBuffer, 0, e.NbIO);
+                    // Transfert sur le serveur FTP
+                    streamasync.Flush();
                 }
             }
         }
@@ -519,7 +590,7 @@ namespace llt.FileIO
         /// </remarks>
         public string[] PathFiles(bool local, string modelenomfichier)
         {
-            // Lest objets permettant l'accès au serveur
+            // Les objets permettant l'accès au serveur
             System.Net.FtpWebRequest fwr = null;
             System.Net.FtpWebResponse fwp = null;
             ModeleNomFichier mf = null;
