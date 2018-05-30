@@ -367,7 +367,7 @@ namespace llt.FileIO
             {
                 if (e.NbIO > 0)
                 {
-.                    // Ecriture dans le stream
+                    // Ecriture dans le stream
                     streamasync.Write(e.IOBuffer, 0, e.NbIO);
                     // Transfert sur le serveur FTP
                     streamasync.Flush();
@@ -428,7 +428,7 @@ namespace llt.FileIO
                 {
                     if (CopyFile(localTOserveur, fichier))
                         fichierscopies.Add(fichier);
-                    if (System.DateTime.Now.Subtract(debutTrt).TotalMinutes > minutesMaxTrt) break;
+                    if (minutesMaxTrt > 0 && System.DateTime.Now.Subtract(debutTrt).TotalMinutes > minutesMaxTrt) break;
                 }
 
                 // Renvoie les fichiers copies
