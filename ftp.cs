@@ -499,8 +499,20 @@ namespace llt.FileIO
                         if (asyncCopyFiles.Count < maxThread)
                         {
                             asyncCopyFiles.Add(new asyncCopyFile(this));
-                            asyncCopyFiles[asyncCopyFiles.Count - 1].startCopyFile(localTOserveur, fichier);
-                            break;
+                            if (asyncCopyFiles[asyncCopyFiles.Count - 1].startCopyFile(localTOserveur, fichier)) break;
+                            else
+                            {
+                                // Si l'ajout d'un nouveau thread n'a pas fonctionné, suppression de la nouvelle occurence
+                                asyncCopyFiles.Remove(asyncCopyFiles[asyncCopyFiles.Count - 1]);
+                                // On diminue le nombre de thread autorisé. Si inférieur à 1, on provoque un arrêt sans erreur
+                                // comme si c'était un timeout.
+                                maxThread--;
+                                if (maxThread < 1)
+                                {
+                                    MaxTrt = true;
+                                    break;
+                                }
+                            }
                         }
                         // Test si une copie terminée
                         int i;
@@ -521,7 +533,16 @@ namespace llt.FileIO
                                 fichierscopies.Add((string)asyncCopyFiles[i].resultatCopyFile);
                             // Démarrage d'une autre copie si le temps de traitemet le permet
                             if (minutesMaxTrt == 0 || (System.DateTime.Now.Subtract(debutTrt).TotalMinutes < minutesMaxTrt))
-                                asyncCopyFiles[i].startCopyFile(localTOserveur, fichier);
+                            {
+                                if (!asyncCopyFiles[i].startCopyFile(localTOserveur, fichier))
+                                {
+                                    // Si création du nouveau thread impossible, suppression de l'occurence.
+                                    // Pas de diminution du nombre maximum de thread.
+                                    asyncCopyFiles.RemoveAt(i);
+                                    System.Threading.Thread.Sleep(500);
+                                    continue;
+                                }
+                            }
                             else
                             {
                                 // On supprime l'occurence du tableau
