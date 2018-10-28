@@ -325,6 +325,12 @@ namespace llt.FileIO.ImportExport
             private SegmentsExport Segments;
             // Le lien en cours
             private LienFichier crsLien;
+            // Dans le cas d'un multi-segment fichier et mono-segment table
+            // si sa valeur est >=0, il faut créer un nouvel enregistrement.
+            // Dans ce cas, cette valeur correspont à l'enregistrement qu'il faut utiliser
+            // pour initialiser le nouvel enregistrement.
+            int forceNewRow;
+            List<string> forceDataColumnName;
             // Liste des erreurs à consigner. 
             // Dans ce cas, une erreur dans un enregistrement n'est pas bloquante
             private List<TextFileIO._ENREG> listeErr;
@@ -857,75 +863,109 @@ namespace llt.FileIO.ImportExport
             /// <param name="enr">L'enregistrement du segment table</param>
             private void MajEnregistrement(TextFileIO._ENREG enr)
             {
-                // Traitement en multi-segments (fichier et tables)
-                if (exportFichier.Liens.Count > 0 && exportTables.Liens.Count > 0)
+                try
                 {
-                    // Si le segment en cours est un segment racine, il faut déclencher l'ajout des enregistrements
-                    // du précédent traitement
-                    if (crsLien.Profondeur == 0) exportTables.Liens.majEnregistrements();
-                }
-
-                // Récupération de tous les segments export
-                SegmentExport[] ses;
-                if (exportFichier.Liens.Count > 0)
-                    ses = Segments.getExports(crsLien.Segment);
-                else
-                    ses = Segments.getExports(exportFichier.Segments[0]);
-
-                // Traitement en multi-segments tables
-                if (exportTables.Liens.Count > 0)
-                {
-                    // Avant de traiter les segments, il faut vérifier si on doit créer des enregistrements
-                    CreEnregistrement(ses);
-
-                    // Traitement de tous les segments
-                    foreach (SegmentExport se in ses)
+                    // Traitement en multi-segments (fichier et tables)
+                    if (exportFichier.Liens.Count > 0 && exportTables.Liens.Count > 0)
                     {
-                        LienTables lt = exportTables.Liens.getLien(se.ChampTable.Table);
-                        MajChamp(lt.crsEnregistrement, enr, se);
+                        // Si le segment en cours est un segment racine, il faut déclencher l'ajout des enregistrements
+                        // du précédent traitement
+                        if (crsLien.Profondeur == 0) exportTables.Liens.majEnregistrements();
                     }
 
-                    // En mono-segment fichier, on déclenche la mise à jour
-                    if (exportFichier.Liens.Count == 0) exportTables.Liens.majEnregistrements();
-                }
-                // Traitement en mono-segment tables
-                else
-                {
-                    // L'enregistrement à utiliser
-                    DataRow dr;
-                    // Création d'un nouvel enregistrement
-                    if (exportTables.dsInterne.Tables[0].Rows.Count == 0 || exportFichier.Liens.Count == 0)
-                        dr = exportTables.dsInterne.Tables[0].NewRow();
+                    // Récupération de tous les segments export
+                    SegmentExport[] ses;
+                    if (exportFichier.Liens.Count > 0)
+                        ses = Segments.getExports(crsLien.Segment);
+                    else
+                        ses = Segments.getExports(exportFichier.Segments[0]);
+
+                    // Traitement en multi-segments tables
+                    if (exportTables.Liens.Count > 0)
+                    {
+                        // Avant de traiter les segments, il faut vérifier si on doit créer des enregistrements
+                        CreEnregistrement(ses);
+
+                        // Traitement de tous les segments
+                        foreach (SegmentExport se in ses)
+                        {
+                            LienTables lt = exportTables.Liens.getLien(se.ChampTable.Table);
+                            MajChamp(lt.crsEnregistrement, enr, se);
+                        }
+
+                        // En mono-segment fichier, on déclenche la mise à jour
+                        if (exportFichier.Liens.Count == 0) exportTables.Liens.majEnregistrements();
+                    }
+                    // Traitement en mono-segment tables
                     else
                     {
-                        // Si multi-segment fichier, il faut vérifier que ce segment déclenche la création d'enregistrement
-                        if (CreEnregistrement(exportTables.dsInterne.Tables[0].TableName))
+                        // L'enregistrement à utiliser
+                        DataRow dr;
+                        // Création d'un nouvel enregistrement
+                        //if (exportTables.dsInterne.Tables[0].Rows.Count == 0 || exportFichier.Liens.Count == 0)
+                        if (exportFichier.Liens.Count == 0 || crsLien.Profondeur == 0)
+                        {
                             dr = exportTables.dsInterne.Tables[0].NewRow();
+                            if (exportFichier.Liens.Count > 0) forceNewRow = -1;
+                        }
                         else
-                            dr = exportTables.dsInterne.Tables[0].Rows[exportTables.dsInterne.Tables[0].Rows.Count - 1];
-                    }
+                        {
+                            // Si création obligatoire d'un enregistrement
+                            if (forceNewRow > -1)
+                            {
+                                dr = exportTables.dsInterne.Tables[0].NewRow();
+                                foreach (string dcn in forceDataColumnName) dr[dcn] = exportTables.dsInterne.Tables[0].Rows[forceNewRow][dcn];
+                            }
+                            else
+                            {
+                                // Si le lien est unique, on reste sur le même enregistrement
+                                if (crsLien.Unique)
+                                    dr = exportTables.dsInterne.Tables[0].Rows[exportTables.dsInterne.Tables[0].Rows.Count - 1];
+                                else
+                                {
+                                    // On tombe sur un ligne non unique. S'agissant de la prmière fois, on utilise
+                                    // le même enregistrement, lors des prochaines lecture, il faudra forcément ajouté
+                                    // un nouvel enregistrement
+                                    dr = exportTables.dsInterne.Tables[0].Rows[exportTables.dsInterne.Tables[0].Rows.Count - 1];
+                                    forceNewRow = exportTables.dsInterne.Tables[0].Rows.Count - 1;
+                                    if (forceDataColumnName == null) forceDataColumnName = new List<string>();
+                                    else forceDataColumnName.Clear();
+                                    // Mémorisation des champs non null à copier
+                                    foreach (DataColumn dc in exportTables.dsInterne.Tables[0].Columns)
+                                    {
+                                        if (dr[dc] != DBNull.Value) forceDataColumnName.Add(dc.ColumnName);
+                                    }
+                                }
+                            }
+                            /* CODE ABANDONNE
+                            // Si multi-segment fichier, il faut vérifier que ce segment déclenche la création d'enregistrement
+                            if (CreEnregistrement(exportTables.dsInterne.Tables[0].TableName))
+                                dr = exportTables.dsInterne.Tables[0].NewRow();
+                            else
+                                dr = exportTables.dsInterne.Tables[0].Rows[exportTables.dsInterne.Tables[0].Rows.Count - 1];
+                             */
+                        }
 
-                    // MAJ des champs
-                    try
-                    {
+                        // MAJ des champs
                         foreach (SegmentExport se in ses)
                         {
                             MajChamp(dr, enr, se);
                         }
-                    }
-                    catch (FileIOError eh)
-                    {
-                        // Si l'erreur n'est pas consignée dans un fichier, on sort en erreur
-                        if (listeErr == null) throw;
-                        // Ajoute l'nregistrement aux erreurs.
-                        listeErr.Add(new TextFileIO._ENREG(new string[] { eh.Message }));
-                        // On sort sans erreur
-                        return;
-                    }
 
-                    // Ajout de l'enregistrement
-                    if (dr.RowState.Equals(DataRowState.Detached))
-                        exportTables.dsInterne.Tables[0].Rows.Add(dr);
+                        // Ajout de l'enregistrement
+                        if (dr.RowState.Equals(DataRowState.Detached))
+                            exportTables.dsInterne.Tables[0].Rows.Add(dr);
+                    }
+                }
+                catch (System.Exception eh)
+                {
+                    // Si l'erreur n'est pas consignée dans un fichier, on sort en erreur
+                    if (listeErr == null) throw;
+                    // Ajoute l'nregistrement aux erreurs.
+                    listeErr.Add(new TextFileIO._ENREG(new string[] { eh.Message }));
+                    listeErr.Add(enr);
+                    // On sort sans erreur
+                    return;
                 }
             }
 
@@ -1125,7 +1165,9 @@ namespace llt.FileIO.ImportExport
                             testMajSegmentsFichierObligatoire(importTables.dsInterne.Tables[i], racLF);
 
                             // Traitement de tous les enregistrements.
-                            foreach (DataRow dr in importTables.dsInterne.Tables[i].Rows) majLiensFichier(dr, sit, racLF);
+                            //foreach (DataRow dr in importTables.dsInterne.Tables[i].Rows) majLiensFichier(dr, sit, racLF);
+                            for (int j = 0; j < importTables.dsInterne.Tables[i].Rows.Count; j++)
+                                majLiensFichier(j, sit, racLF, j > 0);
                         }
 
                         // Création des enregistrements dans le fichier
@@ -1137,6 +1179,20 @@ namespace llt.FileIO.ImportExport
                     // Si plusieurs liens table et fichier
                     else if (importTables.Liens.Count > 0 && importFichier.Liens.Count > 0)
                     {
+                        //  La structure du fichier dirige la lecture des tables.
+                        LienFichier[] lfs = importFichier.Liens.getLiens((LienFichier)null);
+
+                        // Pour chaque lien racine du fichier
+                        foreach (LienFichier lf in lfs)
+                        {
+                            // Recherche du lien table de même profondeur
+                            LienTables lts = getLienTables(lf);
+                            // Si non trouvé c'est une erreur
+                            if (lts == null)
+                                throw new FileIOError(this.GetType().FullName, "La segment fichier racine '" + lf.Segment.Nom + "' n'est mis à jour par aucune table");
+                        }
+
+                        /* ABANDON DE CE CODE
                         // Recherche des tables racines
                         LienTables[] lfr = importTables.Liens.getLiens((LienTables)null);
 
@@ -1174,7 +1230,7 @@ namespace llt.FileIO.ImportExport
                                 }
                             }
                         }
-
+                        */
                         // Non supporté pour l'instant
                         throw new FileIOError(this.GetType().FullName, "Format d'export non supporté");
                     }
@@ -1235,20 +1291,31 @@ namespace llt.FileIO.ImportExport
                             // - a chaque changement d'enregistrement pour un segment de profondeur supérieure 
                             // sauf pour le premier enregistrement traité puisque la création aura été faite
                             // par un segment de profondeux inférieur
+                            bool newenreg = false;
                             if (depLT.Profondeur == 0 || depLT.Profondeur > 0 && j > 0)
+                            {
                                 Enregistrements.Add(importFichier.Segments[0].NewEnreg());
+                                newenreg = true;
+                            }
 
                             // Etant donné qu'il n'y a qu'un seul segment fichier, tous les segments import
                             // mettent à jour le même enregistrement.
                             TextFileIO._ENREG crsenreg = Enregistrements[Enregistrements.Count - 1];
 
+                            // Si création d'un nouvel enregistrement, on charge les champs à valeur fixe
+                            if (newenreg)
+                            {
+                                foreach (SegmentImport si in Segments)
+                                {
+                                    if (si.NomChampTable.StartsWith("="))
+                                        si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref crsenreg);
+                                }
+                            }
+
                             // MAJ des champs
                             foreach (SegmentImport si in sit)
                             {
-                                if (!si.NomChampTable.StartsWith("="))
-                                    si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref crsenreg);
-                                else
-                                    si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref crsenreg);
+                                si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref crsenreg);
                             }
 
                             // Chargement des champs pour les liens parents
@@ -1280,6 +1347,55 @@ namespace llt.FileIO.ImportExport
                 }
             }
 
+            private void majLiensFichier(int iRow,SegmentImport[] sit,LienFichier lf, bool testAddSeg)
+            {
+                // Par défaut, création d'un nouveau segment
+                bool addSeg = true;
+
+                // On test si on doit créer un nouveau segment
+                if (testAddSeg)
+                {
+                    // Si on est sur un segment fichier de dernier niveau, 
+                    // la création d'enregistrement est systémtique sauf si le segment est déclaré unique
+                    if (importFichier.Liens.getLiens(lf).Length == 0)
+                        addSeg = !lf.Unique;
+                    else
+                    {
+                        foreach (SegmentImport si in sit)
+                        {
+                            if (lf.Segment.Champs.Contains(si.ChampFichierMaj)
+                                && !si.NomChampTable.StartsWith("=")
+                                && importTables.dsInterne.Tables[0].Rows[iRow][si.NomChampTable].Equals(importTables.dsInterne.Tables[0].Rows[iRow - 1][si.NomChampTable]))
+                            {
+                                addSeg = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Création d'un nouveau segment si nécessaire
+                if (addSeg)
+                { 
+                    // Création d'un nouvel enregistrement
+                    TextFileIO._ENREG enreg = lf.Segment.NewEnreg();
+                    // Recherche des segment imports liès à ce segment fichier
+                    SegmentImport[] sif = Segments.getImports(lf.Segment);
+                    // MAJ des champs
+                    foreach (SegmentImport si in sif)
+                    {
+                        if (!si.NomChampTable.StartsWith("="))
+                            si.ChampFichierMaj.SetValue(importTables.dsInterne.Tables[0].Rows[iRow][si.NomChampTable], ref enreg);
+                        else
+                            si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
+                    }
+                    Enregistrements.Add(enreg);
+                }
+
+                // Traitement des dépendances
+                foreach (LienFichier lfd in importFichier.Liens.getLiens(lf)) majLiensFichier(iRow, sit, lfd,!addSeg);
+            }
+            /* CODE ABANDONNE
             // MAJ des segments fichiers dans le cas d'un seul segment table
             private void majLiensFichier(DataRow dr, SegmentImport[] sit, LienFichier lf)
             {
@@ -1301,6 +1417,7 @@ namespace llt.FileIO.ImportExport
                 // Traitement des dépendances
                 foreach (LienFichier lfd in importFichier.Liens.getLiens(lf)) majLiensFichier(dr, sit, lfd);
             }
+            */
 
             /// <summary>
             /// Création des segments import
@@ -1410,6 +1527,28 @@ namespace llt.FileIO.ImportExport
 
                 // Renvoie le lien fichier racine trouvé
                 return racLF;
+            }
+
+            /// <summary>
+            /// Renvoie le lien table de même niveau que le lien fichier
+            /// </summary>
+            /// <param name="lf">Le lien fichier</param>
+            /// <returns>le lien table ou null si non trouvé</returns>
+            private LienTables getLienTables(LienFichier lf)
+            {
+                // Recherche les segments imports utilisant le segment fichier
+                SegmentImport[] sis = Segments.getImports(lf.Segment);
+                if (sis == null) return null;
+                // Recherche dans les segments imports, d'un lien table de même profondeur
+                // que le lien fichier
+                foreach (SegmentImport si in sis)
+                {
+                    LienTables lts = importTables.Liens.getLien(si.SegmentTable);
+                    if (lts != null && lts.Profondeur == lf.Profondeur) return lts;
+                }
+                // Aucune table trouvée
+                // PS : cas d'une segment fichier ne contenant que des valeurs constantes
+                return new LienTables(null, true, false);
             }
 
             // Test uniquement dans le cas d'un seul segment table et plusieurs segments fichiers
@@ -1663,6 +1802,30 @@ namespace llt.FileIO.ImportExport
                 for (int i = 0; i < this.Count; i++)
                 {
                     if (this[i].SegmentTable.Equals(segmenttable))
+                    {
+                        SegmentImport[] cpses = new SegmentImport[ses.Length + 1];
+                        if (ses.Length > 0) ses.CopyTo(cpses, 0);
+                        cpses[ses.Length] = this[i];
+                        ses = cpses;
+                    }
+                }
+                // Revoie les segments export dépendant.
+                return ses;
+            }
+            /// <summary>
+            /// Renvoie un tableau des segments imports utilisant le segment fichier
+            /// </summary>
+            /// <param name="segmentfichier">Le segment fichier</param>
+            /// <returns>La liste des segments imports</returns>
+            public SegmentImport[] getImports(SegmentFichier segmentfichier)
+            {
+                // Le tableau des liens
+                SegmentImport[] ses = new SegmentImport[] { };
+
+                // Recherche des dépendances
+                for (int i = 0; i < this.Count; i++)
+                {
+                    if (this[i].SegmentTable.Equals(segmentfichier))
                     {
                         SegmentImport[] cpses = new SegmentImport[ses.Length + 1];
                         if (ses.Length > 0) ses.CopyTo(cpses, 0);
