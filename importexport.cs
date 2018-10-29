@@ -1377,19 +1377,22 @@ namespace llt.FileIO.ImportExport
                 // Création d'un nouveau segment si nécessaire
                 if (addSeg)
                 { 
-                    // Création d'un nouvel enregistrement
-                    TextFileIO._ENREG enreg = lf.Segment.NewEnreg();
                     // Recherche des segment imports liès à ce segment fichier
                     SegmentImport[] sif = Segments.getImports(lf.Segment);
-                    // MAJ des champs
-                    foreach (SegmentImport si in sif)
+                    if (sif.Length > 0)
                     {
-                        if (!si.NomChampTable.StartsWith("="))
-                            si.ChampFichierMaj.SetValue(importTables.dsInterne.Tables[0].Rows[iRow][si.NomChampTable], ref enreg);
-                        else
-                            si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
+                        // Création d'un nouvel enregistrement
+                        TextFileIO._ENREG enreg = lf.Segment.NewEnreg();
+                        // MAJ des champs
+                        foreach (SegmentImport si in sif)
+                        {
+                            if (!si.NomChampTable.StartsWith("="))
+                                si.ChampFichierMaj.SetValue(importTables.dsInterne.Tables[0].Rows[iRow][si.NomChampTable], ref enreg);
+                            else
+                                si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
+                        }
+                        Enregistrements.Add(enreg);
                     }
-                    Enregistrements.Add(enreg);
                 }
 
                 // Traitement des dépendances
@@ -1558,13 +1561,13 @@ namespace llt.FileIO.ImportExport
                 LienFichier[] lfs = importFichier.Liens.getLiens(dependde);
                 if (lfs.Length == 0) return;
                 // Des champs du segment supérieurs parent sont-il mis à jour.
-                bool segsup = (Segments.getImports(dt, dependde.Segment).Length == 0);
+                bool segsup = (Segments.getImports(dt, dependde.Segment).Length > 0);
 
                 // Pour chaque dépendance
                 foreach (LienFichier lf in lfs)
                 {
                     // Des champs sont-il MAJ. 
-                    bool segcrs = (Segments.getImports(dt, lf.Segment).Length == 0);
+                    bool segcrs = (Segments.getImports(dt, lf.Segment).Length > 0);
 
                     // Si segment obligatoire, il faut un champ MAJ
                     if (!lf.Facultatif && !segcrs)
@@ -1825,7 +1828,7 @@ namespace llt.FileIO.ImportExport
                 // Recherche des dépendances
                 for (int i = 0; i < this.Count; i++)
                 {
-                    if (this[i].SegmentTable.Equals(segmentfichier))
+                    if (segmentfichier.Champs.Contains(this[i].ChampFichierMaj))
                     {
                         SegmentImport[] cpses = new SegmentImport[ses.Length + 1];
                         if (ses.Length > 0) ses.CopyTo(cpses, 0);
