@@ -1632,9 +1632,13 @@ namespace llt.FileIO.ImportExport
             public TextFileIO._ENREG NewEnreg()
             {
                 if (ChampLongueurFixe)
-                    return new TextFileIO._ENREG(new string[1]);
+                    return new TextFileIO._ENREG(new string[1] { "" });
                 else
-                    return new TextFileIO._ENREG(new string[Champs.Count]);
+                {
+                    string[] s = new string[Champs.Count];
+                    for (int i = 0; i < Champs.Count; i++) s[i] = "";
+                    return new TextFileIO._ENREG(s);
+                }
             }
         }
 
