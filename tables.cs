@@ -97,6 +97,55 @@ namespace llt.FileIO.ImportExport
             }
 
             /// <summary>
+            /// Ajoute le nom et la condition associée d'un segment virtuel.
+            /// </summary>
+            /// <param name="nomsegment">Nom du segment virtuel</param>
+            /// <param name="segmentvirtuelde">Nom du segment DataTable</param>
+            /// <param name="si">La condition de sélection des enregistrements</param>
+            internal void AddNomSegmentVirtuel(string nomsegment, string segmentvirtuelde, string si)
+            {
+                // Le segment doit exister
+                if (!dsinterne.Tables.Contains(segmentvirtuelde))
+                    throw new FileIOError(this.GetType().FullName, "Le segment table ('" + segmentvirtuelde + "') existe déja");
+                // On ajoute l'information sur le segment virtuel
+                dsinterne.Tables[segmentvirtuelde].ExtendedProperties.Add("SEGV_" + nomsegment, si);
+            }
+            /// <summary>
+            /// Renvoie la liste des segments virtuels avec la condition associée
+            /// </summary>
+            /// <param name="segmentvirtuelde">Le segment table</param>
+            /// <returns>Renvoie un liste (vide si aucun segment)</returns>
+            internal System.Collections.Hashtable SegmentsVirtuel(string segmentvirtuelde)
+            {
+                System.Collections.Hashtable segmentsvirtuel = new System.Collections.Hashtable();
+                foreach (object key in dsinterne.Tables[segmentvirtuelde].ExtendedProperties.Keys)
+                {
+                    if (key.ToString().StartsWith("segv_",StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        segmentsvirtuel.Add(key.ToString().Substring(5), dsinterne.Tables[segmentvirtuelde].ExtendedProperties[key]);
+                    }
+                }
+                return segmentsvirtuel;
+            }
+            /// <summary>
+            /// Renvoie la liste des enregistrements par segment virtuel.
+            /// </summary>
+            /// <param name="segmentvirtuelde">Le segment table</param>
+            /// <param name="segmentsvirtuel">La liste des segments virtuels</param>
+            /// <returns>Renvoie un liste (vide si aucun enregistrement)</returns>
+            internal Dictionary<string,DataRow[]> SegmentVirtuelEnrs(string segmentvirtuelde, System.Collections.Hashtable segmentsvirtuel)
+            {
+                Dictionary<string, DataRow[]> segmentsvirtuelenrs = new Dictionary<string, DataRow[]>();
+                foreach (object key in segmentsvirtuel.Keys)
+                {
+                    DataRow[] drs = dsinterne.Tables[segmentvirtuelde].Select(segmentsvirtuel[key].ToString());
+                    if (drs.Length > 0) segmentsvirtuelenrs.Add(key.ToString(), drs);
+                }
+                return segmentsvirtuelenrs;
+            }
+
+            /* ABANDON DE CE MODE DE FONCTIONNEMENT DES SEGMENTS VIRTUELS
+            /// <summary>
             /// Création d'un segment table virtuel dans le DataSet
             /// </summary>
             /// <param name="nomsegment">Le nom du segment table à créér</param>
@@ -173,13 +222,24 @@ namespace llt.FileIO.ImportExport
                 lsv.CopyTo(lssv, 1);
                 return lssv;
             }
-
+            */
+            
+            /// <summary>
+            /// Renvoie l'index de l'enregistrement en cours
+            /// </summary>
+            /// <param name="segment">Le segment table</param>
+            /// <returns>Renvoie la position (-1 si aucun enregistrement en cours)</returns>
             internal int getIndexImportEnregistrement(DataTable segment)
             {
                 if (!segment.ExtendedProperties.Contains("IndexImportEnregistrement"))
                     setIndexImportEnregistrement(segment, (int)-1);
                 return (int)segment.ExtendedProperties["IndexImportEnregistrement"];
             }
+            /// <summary>
+            /// Définit l'enregistrement en cours
+            /// </summary>
+            /// <param name="segment">Le segment table</param>
+            /// <param name="index">L'index de l'eenregistrement en cours</param>
             internal void setIndexImportEnregistrement(DataTable segment, int index)
             {
                 if (!segment.ExtendedProperties.Contains("IndexImportEnregistrement"))

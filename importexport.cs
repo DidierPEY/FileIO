@@ -255,6 +255,15 @@ namespace llt.FileIO.ImportExport
                 // Chargement des enregistrements dans le dataset interne en tenant compte des segments virtuels
                 foreach (DataTable dt in tables.dsInterne.Tables)
                 {
+                    // Création des enregistrements dans le datatable interne
+                    foreach (DataRow dri in dsImport.Tables[dt.TableName].Rows)
+                    {
+                        DataRow dr = dt.NewRow();
+                        foreach (DataColumn dc in dt.Columns)
+                            dr[dc] = dri[dc.ColumnName];
+                        dt.Rows.Add(dr);
+                    }
+                    /* CODE ABANDONNE
                     // Les enregistrement à importer
                     DataRow[] dris = null;
                     string dtname = "";
@@ -271,7 +280,8 @@ namespace llt.FileIO.ImportExport
                     {
                         // Un ou plusieurs segment tabme virtuel dépend de ce segment table
                         dtname = dt.TableName;
-                        DataTable[] segsVirtuel = tables.getSEGVirtuel(dt.TableName);
+                        //DataTable[] segsVirtuel = tables.getSEGVirtuel(dt.TableName);
+                        DataTable[] segsVirtuel = null;
                         if (segsVirtuel.Length > 0)
                         {
                             // On exclu tous les enregistrements du ou des segments virtuels
@@ -299,6 +309,7 @@ namespace llt.FileIO.ImportExport
                             dt.Rows.Add(dr);
                         }
                     }
+                    */
                 }
 
                 // Lance l'importation
@@ -316,8 +327,10 @@ namespace llt.FileIO.ImportExport
             {
                 // Suppression des enregistrements dans les tables.
                 tables.dsInterne.Clear();
+                /* CODE ABANDONNE
                 // Suppression des tables virtuels
                 tables.DelSEGVirtuel();
+                */
             }
         }
 
@@ -1106,37 +1119,63 @@ namespace llt.FileIO.ImportExport
                     // Si aucun lien (ni table ni fichier)
                     if (importTables.Liens.Count == 0 && importFichier.Liens.Count == 0)
                     {
-                        // Traitement de toutes les tables (il peut exister un segment ou plusisurs virtuel)
-                        for (int i = 0; i < importTables.dsInterne.Tables.Count; i++)
+                        // Est-ce que cette table est utilisée.
+                        SegmentImport[] sit = Segments.getImports(importTables.dsInterne.Tables[0].TableName);
+                        if (sit.Length == 0) return;
+                        SegmentImport[] sittrt = sit;
+
+                        // Est-ce que des segments virtuels dépendent de cette table
+                        System.Collections.Hashtable SegmentsVirtuel = importTables.SegmentsVirtuel(importTables.dsInterne.Tables[0].TableName);
+                        // Liste des enregistrements par segment virtuel
+                        Dictionary<string, DataRow[]> SegmentVirtuelEnrs;
+                        if (SegmentsVirtuel.Count == 0)
+                            SegmentVirtuelEnrs = new Dictionary<string, DataRow[]>();
+                        else
                         {
-                            // Est-ce que cette table est utilisée.
-                            SegmentImport[] sit = Segments.getImports(importTables.dsInterne.Tables[i]);
-                            if (sit.Length == 0) continue;
+                            SegmentVirtuelEnrs = importTables.SegmentVirtuelEnrs(importTables.dsInterne.Tables[0].TableName, SegmentsVirtuel);
+                        }
+                        // Les segment import à utiliser en fonction du segment virtuel
+                        Dictionary<string, SegmentImport[]> sivt=new Dictionary<string,SegmentImport[]>();
+                        foreach (string key in SegmentVirtuelEnrs.Keys)
+                            sivt.Add(key, Segments.getImports(key));
 
-                            // Traitement de tous les enregistrements.
-                            foreach (DataRow dr in importTables.dsInterne.Tables[i].Rows)
+                        // Traitement de tous les enregistrements.
+                        foreach (DataRow dr in importTables.dsInterne.Tables[0].Rows)
+                        {
+                            // Création d'un nouvel enregistrement
+                            TextFileIO._ENREG enreg = importFichier.Segments[0].NewEnreg();
+
+                            // Quel segmentimport à utiliser
+                            if (SegmentVirtuelEnrs.Count > 0)
                             {
-                                // Création d'un nouvel enregistrement
-                                TextFileIO._ENREG enreg = importFichier.Segments[0].NewEnreg();
-
-                                // MAJ des champs
-                                foreach (SegmentImport si in sit)
+                                sittrt = sit;
+                                foreach (KeyValuePair<string, DataRow[]> kvp in SegmentVirtuelEnrs)
                                 {
-                                    if (!si.NomChampTable.StartsWith("="))
-                                        si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref enreg);
-                                    else
-                                        si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
+                                    if (Array.IndexOf(kvp.Value,dr)>0)
+                                    {
+                                        sittrt = sivt[kvp.Key];
+                                        break;
+                                    }
                                 }
-
-                                // Ajout de l'enregistrement
-                                Enregistrements.Add(enreg);
                             }
 
-                            // Création des enregistrements dans le fichier
-                            txtFileIO.WriteFile(Enregistrements);
-                            Enregistrements.Clear();
-                            txtFileIO.WaitAllIO();
+                            // MAJ des champs
+                            foreach (SegmentImport si in sittrt)
+                            {
+                                if (!si.NomChampTable.StartsWith("="))
+                                    si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref enreg);
+                                else
+                                    si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
+                            }
+
+                            // Ajout de l'enregistrement
+                            Enregistrements.Add(enreg);
                         }
+
+                        // Création des enregistrements dans le fichier
+                        txtFileIO.WriteFile(Enregistrements);
+                        Enregistrements.Clear();
+                        txtFileIO.WaitAllIO();
                     }
 
                     // Si aucun lien fichier mais plusieurs tables
@@ -1154,29 +1193,60 @@ namespace llt.FileIO.ImportExport
                     // Si aucun lien table mais plusieurs liens fichier
                     else if (importTables.Liens.Count == 0 && importFichier.Liens.Count > 0)
                     {
-                        // Traitement de toutes les tables (il peut exister un segment ou plusisurs virtuel)
-                        for (int i = 0; i < importTables.dsInterne.Tables.Count; i++)
+                        // Est-ce que cette table est utilisée.
+                        SegmentImport[] sit = Segments.getImports(importTables.dsInterne.Tables[0].TableName);
+                        if (sit.Length == 0) return;
+                        SegmentImport[] sittrt = sit;
+
+                        // La table doit forcément mettre à jour un lien fichier racine
+                        LienFichier racLF = getLienFichierRacine(importTables.dsInterne.Tables[0]);
+                        if (racLF == null)
+                            throw new FileIOError(this.GetType().FullName, "La table '" + importTables.dsInterne.Tables[0].TableName + "' ne met à jour aucun lien racine dans le fichier");
+
+                        // Si le lien racine est unique, la table ne doit pas contenir plusieurs enregistrements
+                        if (racLF.Unique && importTables.dsInterne.Tables[0].Rows.Count > 1)
+                            throw new FileIOError(this.GetType().FullName, "La table '" + importTables.dsInterne.Tables[0].TableName + "' contient plusieurs enregisrement alors que le lien racine dans le fichier est unique");
+
+                        // Est-ce que des segments virtuels dépendent de cette table
+                        System.Collections.Hashtable SegmentsVirtuel = importTables.SegmentsVirtuel(importTables.dsInterne.Tables[0].TableName);
+                        // Liste des enregistrements par segment virtuel
+                        Dictionary<string, DataRow[]> SegmentVirtuelEnrs;
+                        if (SegmentsVirtuel.Count == 0)
+                            SegmentVirtuelEnrs = new Dictionary<string, DataRow[]>();
+                        else
                         {
-                            // Est-ce que cette table est utilisée.
-                            SegmentImport[] sit = Segments.getImports(importTables.dsInterne.Tables[i]);
-                            if (sit.Length == 0) continue;
+                            SegmentVirtuelEnrs = importTables.SegmentVirtuelEnrs(importTables.dsInterne.Tables[0].TableName, SegmentsVirtuel);
+                        }
+                        // Les segment import à utiliser en fonction du segment virtuel
+                        Dictionary<string, SegmentImport[]> sivt = new Dictionary<string, SegmentImport[]>();
+                        foreach (string key in SegmentVirtuelEnrs.Keys)
+                            sivt.Add(key, Segments.getImports(key));
 
-                            // La table doit forcément mettre à jour un lien fichier racine
-                            LienFichier racLF = getLienFichierRacine(importTables.dsInterne.Tables[i]);
-                            if (racLF == null)
-                                throw new FileIOError(this.GetType().FullName, "La table '" + importTables.dsInterne.Tables[i].TableName + "' ne met à jour aucun lien racine dans le fichier");
+                        // Il faut vérifier que les segments obligatoires sur le fichier sont bien alimentés par la table
+                        testMajSegmentsFichierObligatoire(importTables.dsInterne.Tables[0].TableName, racLF);
+                        foreach (string key in SegmentVirtuelEnrs.Keys)
+                            testMajSegmentsFichierObligatoire(key, racLF);
 
-                            // Si le lien racine est unique, la table ne doit pas contenir plusieurs enregistrements
-                            if (racLF.Unique && importTables.dsInterne.Tables[i].Rows.Count > 1)
-                                throw new FileIOError(this.GetType().FullName, "La table '" + importTables.dsInterne.Tables[i].TableName + "' contient plusieurs enregisrement alors que le lien racine dans le fichier est unique");
-
-                            // Il faut vérifier que les segments obligatoires sur le fichier sont bien alimentés par la table
-                            testMajSegmentsFichierObligatoire(importTables.dsInterne.Tables[i], racLF);
-
-                            // Traitement de tous les enregistrements.
-                            //foreach (DataRow dr in importTables.dsInterne.Tables[i].Rows) majLiensFichier(dr, sit, racLF);
-                            for (int j = 0; j < importTables.dsInterne.Tables[i].Rows.Count; j++)
-                                majLiensFichier(j, sit, racLF, j > 0);
+                        // Traitement de tous les enregistrements.
+                        //foreach (DataRow dr in importTables.dsInterne.Tables[i].Rows) majLiensFichier(dr, sit, racLF);
+                        for (int j = 0; j < importTables.dsInterne.Tables[0].Rows.Count; j++)
+                        {
+                            // Quel segmentimport à utiliser
+                            if (SegmentVirtuelEnrs.Count > 0)
+                            {
+                                sittrt = sit;
+                                foreach (KeyValuePair<string, DataRow[]> kvp in SegmentVirtuelEnrs)
+                                {
+                                    if (Array.IndexOf(kvp.Value, importTables.dsInterne.Tables[0].Rows[j]) >= 0)
+                                    {
+                                        sittrt = sivt[kvp.Key];
+                                        break;
+                                    }
+                                }
+                            }
+                            // Maj du fichier
+                            bool testAddSeg = (j > 0);
+                            majLiensFichier(j, sittrt, racLF, ref testAddSeg);
                         }
 
                         // Création des enregistrements dans le fichier
@@ -1274,91 +1344,123 @@ namespace llt.FileIO.ImportExport
                 // Pour chaque lien trouvé
                 foreach (LienTables depLT in depLTS)
                 {
-                    // On détermine les tables à traiter (ne pas oublier les segments virtuels !)
-                    DataTable[] segtrt = importTables.getSEGplusSEGVirtuel(depLT.Segment);
+                    // Est-ce que cette table est utilisée.
+                    SegmentImport[] sit = Segments.getImports(depLT.Segment.TableName);
+                    if (sit.Length == 0) continue;
+                    SegmentImport[] sittrt = sit;
 
-                    // Traitement de tous les segments tables
-                    for (int i = 0; i < segtrt.Length; i++)
+                    // Recherche des enregistrement à traiter
+                    DataRow[] drs = depLT.getRows(dependde);
+                    if (drs.Length == 0) continue;
+
+                    // Est-ce que des segments virtuels dépendent de cette table
+                    System.Collections.Hashtable SegmentsVirtuel = importTables.SegmentsVirtuel(depLT.Segment.TableName);
+                    // Liste des enregistrements par segment virtuel
+                    Dictionary<string, DataRow[]> SegmentVirtuelEnrs;
+                    if (SegmentsVirtuel.Count == 0)
+                        SegmentVirtuelEnrs = new Dictionary<string, DataRow[]>();
+                    else
                     {
-                        // Est-ce que cette table est utilisée.
-                        SegmentImport[] sit = Segments.getImports(segtrt[i]);
-                        if (sit.Length == 0) continue;
+                        SegmentVirtuelEnrs = importTables.SegmentVirtuelEnrs(depLT.Segment.TableName, SegmentsVirtuel);
+                    }
+                    // Les segment import à utiliser en fonction du segment virtuel
+                    Dictionary<string, SegmentImport[]> sivt = new Dictionary<string, SegmentImport[]>();
+                    foreach (string key in SegmentVirtuelEnrs.Keys)
+                        sivt.Add(key, Segments.getImports(key));
 
-                        // Recherche des enregistrement à traiter
-                        DataRow[] drs = depLT.getRows(dependde);
-                        if (drs.Length == 0) continue;
+                    // Traitement de tous les enregistrements.
+                    for (int j = 0; j < drs.Length; j++)
+                    {
+                        // Affection de l'enregistrement en cours.
+                        importTables.setIndexImportEnregistrement(depLT.Segment, j);
+                        DataRow dr = drs[j];
 
-                        // Traitement de tous les enregistrements.
-                        for (int j = 0; j < drs.Length; j++)
+                        // Création d'un nouvel enregistrement :
+                        // - a chaque changement d'enregistrement pour le segment de profondeur 0
+                        // - a chaque changement d'enregistrement pour un segment de profondeur supérieure 
+                        // sauf pour le premier enregistrement traité puisque la création aura été faite
+                        // par un segment de profondeux inférieur
+                        bool newenreg = false;
+                        if (depLT.Profondeur == 0 || depLT.Profondeur > 0 && j > 0)
                         {
-                            // Affection de l'enregistrement en cours.
-                            importTables.setIndexImportEnregistrement(depLT.Segment, j);
-                            DataRow dr = drs[j];
-
-                            // Création d'un nouvel enregistrement :
-                            // - a chaque changement d'enregistrement pour le segment de profondeur 0
-                            // - a chaque changement d'enregistrement pour un segment de profondeur supérieure 
-                            // sauf pour le premier enregistrement traité puisque la création aura été faite
-                            // par un segment de profondeux inférieur
-                            bool newenreg = false;
-                            if (depLT.Profondeur == 0 || depLT.Profondeur > 0 && j > 0)
-                            {
-                                Enregistrements.Add(importFichier.Segments[0].NewEnreg());
-                                newenreg = true;
-                            }
-
-                            // Etant donné qu'il n'y a qu'un seul segment fichier, tous les segments import
-                            // mettent à jour le même enregistrement.
-                            TextFileIO._ENREG crsenreg = Enregistrements[Enregistrements.Count - 1];
-
-                            // Si création d'un nouvel enregistrement, on charge les champs à valeur fixe
-                            if (newenreg)
-                            {
-                                foreach (SegmentImport si in Segments)
-                                {
-                                    if (si.NomChampTable.StartsWith("="))
-                                        si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref crsenreg);
-                                }
-                            }
-
-                            // MAJ des champs
-                            foreach (SegmentImport si in sit)
-                            {
-                                si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref crsenreg);
-                            }
-
-                            // Chargement des champs pour les liens parents
-                            if (depLT.Profondeur > 0 && j > 0)
-                            {
-                                LienTables depInf = depLT.DependDe;
-                                while (depInf != null)
-                                {
-                                    // L'enregistrement en cours pour ce lien
-                                    DataRow drinf = depInf.Segment.Rows[importTables.getIndexImportEnregistrement(depInf.Segment)];
-                                    // MAJ des champs
-                                    SegmentImport[] sitinf = Segments.getImports(depInf.Segment);
-                                    foreach (SegmentImport si in sitinf)
-                                    {
-                                        si.ChampFichierMaj.SetValue(drinf[si.NomChampTable], ref crsenreg);
-                                    }
-                                    // On passe à la dépendance supérieure
-                                    depInf = depInf.DependDe;
-                                }
-                            }
-
-                            // On stock la nouvelle valeur de l'enregistrement
-                            Enregistrements[Enregistrements.Count - 1] = crsenreg;
-
-                            // On descend les niveau dans les liens
-                            LecLiensTables(dr);
+                            Enregistrements.Add(importFichier.Segments[0].NewEnreg());
+                            newenreg = true;
                         }
+
+                        // Etant donné qu'il n'y a qu'un seul segment fichier, tous les segments import
+                        // mettent à jour le même enregistrement.
+                        TextFileIO._ENREG crsenreg = Enregistrements[Enregistrements.Count - 1];
+
+                        /* INUTILE
+                        // Si création d'un nouvel enregistrement, on charge les champs à valeur fixe
+                        if (newenreg)
+                        {
+                            foreach (SegmentImport si in Segments)
+                            {
+                                if (si.NomChampTable.StartsWith("="))
+                                    si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref crsenreg);
+                            }
+                        }
+                        */
+                        // Quel segmentimport à utiliser
+                        if (SegmentVirtuelEnrs.Count > 0)
+                        {
+                            sittrt = sit;
+                            foreach (KeyValuePair<string, DataRow[]> kvp in SegmentVirtuelEnrs)
+                            {
+                                if (Array.IndexOf(kvp.Value, dr) > 0)
+                                {
+                                    sittrt = sivt[kvp.Key];
+                                    break;
+                                }
+                            }
+                        }
+
+                        // MAJ des champs
+                        foreach (SegmentImport si in sit)
+                        {
+                            if (si.NomChampTable.StartsWith("="))
+                                si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref crsenreg);
+                            else
+                                si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref crsenreg);
+                        }
+
+                        // Chargement des champs pour les liens parents
+                        if (depLT.Profondeur > 0 && j > 0)
+                        {
+                            LienTables depInf = depLT.DependDe;
+                            while (depInf != null)
+                            {
+                                // L'enregistrement en cours pour ce lien
+                                DataRow drinf = depInf.Segment.Rows[importTables.getIndexImportEnregistrement(depInf.Segment)];
+                                // MAJ des champs
+                                SegmentImport[] sitinf = Segments.getImports(depInf.Segment.TableName);
+                                foreach (SegmentImport si in sitinf)
+                                {
+                                    si.ChampFichierMaj.SetValue(drinf[si.NomChampTable], ref crsenreg);
+                                }
+                                // On passe à la dépendance supérieure
+                                depInf = depInf.DependDe;
+                            }
+                        }
+
+                        // On stock la nouvelle valeur de l'enregistrement
+                        Enregistrements[Enregistrements.Count - 1] = crsenreg;
+
+                        // On descend les niveau dans les liens
+                        LecLiensTables(dr);
                     }
                 }
             }
 
             // Traitement de l'importation dans le cas d'un seul segment table mais plusieurs liens fichier
-            private void majLiensFichier(int iRow, SegmentImport[] sit, LienFichier lf, bool testAddSeg)
+            private void majLiensFichier(int iRow, SegmentImport[] sit, LienFichier lf, ref bool testAddSeg)
             {
+                // Si le test de créaton d'enregistrement est actif, il est définitivement désactivé pour
+                // l'enregistrement en cours de traitement dès que l'on rencontre un segment fichier non unique
+                // de profondeur supérieur à 0. 
+                if (testAddSeg && lf.Profondeur > 0 && !lf.Unique) testAddSeg = false;
+
                 // Est-que le segment est mis à jour par la table.
                 bool segtrt = false;
                 foreach (SegmentImport si in sit)
@@ -1420,7 +1522,7 @@ namespace llt.FileIO.ImportExport
                 }
 
                 // Traitement des dépendances
-                foreach (LienFichier lfd in importFichier.Liens.getLiens(lf)) majLiensFichier(iRow, sit, lfd,!addSeg);
+                foreach (LienFichier lfd in importFichier.Liens.getLiens(lf)) majLiensFichier(iRow, sit, lfd, ref testAddSeg);
             }
 
             /// <summary>
@@ -1459,7 +1561,10 @@ namespace llt.FileIO.ImportExport
                     throw new FileIOError(this.GetType().FullName, "le segment '" + (segmentvirtuel.Equals("") ? nomsegment : segmentvirtuel) + "' n'existe pas dans <tables>.");
 
                 // Dans le cas d'un segment virtuel, il faut le créer.
+                /* ABANDONNE : le segment reste viruel et n'est pas créé dans Tables.
                 if (!segmentvirtuel.Equals("")) importTables.CreSEGVirtuel(nomsegment, segmentvirtuel, si);
+                */
+                if (!segmentvirtuel.Equals("")) importTables.AddNomSegmentVirtuel(nomsegment, segmentvirtuel, si);
 
                 // On cré un tableau de chaine correspondant à chaque ligne de <segment>
                 string[] champs;
@@ -1487,7 +1592,7 @@ namespace llt.FileIO.ImportExport
                     if (!sc.StartsWith("."))
                         throw new FileIOError(this.GetType().FullName, "Le ligne doit obligatoirement commencer par un '.'");
                     // Ajoute le segment import
-                    Segments.Add(new SegmentImport(importTables.dsInterne.Tables[nomsegment], importFichier.Segments, sc));
+                    Segments.Add(new SegmentImport(nomsegment, importTables.dsInterne.Tables[segmentvirtuel == "" ? nomsegment : segmentvirtuel], importFichier.Segments, sc));
                 }
             }
 
@@ -1522,7 +1627,7 @@ namespace llt.FileIO.ImportExport
                 // On cherche le segment racine fichier MAJ par le segment table
                 foreach (LienFichier testLF in racLFS)
                 {
-                    SegmentImport[] sit = Segments.getImports(dt, testLF.Segment);
+                    SegmentImport[] sit = Segments.getImports(dt.TableName, testLF.Segment);
                     if (sit.Length == 0) continue;
                     if (racLF == null) racLF = testLF;
                     else
@@ -1556,30 +1661,30 @@ namespace llt.FileIO.ImportExport
             }
 
             // Test uniquement dans le cas d'un seul segment table et plusieurs segments fichiers
-            private void testMajSegmentsFichierObligatoire(DataTable dt, LienFichier dependde)
+            private void testMajSegmentsFichierObligatoire(string nomsegmentimport, LienFichier dependde)
             {
                 // Recherche des dépendances
                 LienFichier[] lfs = importFichier.Liens.getLiens(dependde);
                 if (lfs.Length == 0) return;
                 // Des champs du segment supérieurs parent sont-il mis à jour.
-                bool segsup = (Segments.getImports(dt, dependde.Segment).Length > 0);
+                bool segsup = (Segments.getImports(nomsegmentimport, dependde.Segment).Length > 0);
 
                 // Pour chaque dépendance
                 foreach (LienFichier lf in lfs)
                 {
                     // Des champs sont-il MAJ. 
-                    bool segcrs = (Segments.getImports(dt, lf.Segment).Length > 0);
+                    bool segcrs = (Segments.getImports(nomsegmentimport, lf.Segment).Length > 0);
 
                     // Si segment obligatoire, il faut un champ MAJ
                     if (!lf.Facultatif && !segcrs)
-                        throw new FileIOError(this.GetType().FullName, "Le segment table '" + lf.Segment.Nom + "' n'est pas mis à jour par le segment table '" + dt.TableName + "'");
+                        throw new FileIOError(this.GetType().FullName, "Le segment fichier '" + lf.Segment.Nom + "' n'est pas mis à jour par le segment import '" + nomsegmentimport + "'");
 
                     // Si des champs sont MAJ mais aucun champ du niveau supérieur, c'est une erreur
                     if (segcrs && !segsup)
                         throw new FileIOError(this.GetType().FullName, "Le segment table '" + lf.Segment.Nom + "' est mis à jour alors que son segment parent '" + dependde.Segment.Nom + "' ne l'est jamais");
 
                     // Recherche sur les dépedances
-                    testMajSegmentsFichierObligatoire(dt, lf);
+                    testMajSegmentsFichierObligatoire(nomsegmentimport, lf);
                 }
             }
         }
@@ -1767,7 +1872,8 @@ namespace llt.FileIO.ImportExport
                 // Vérification que ce segment export n'existe pas
                 foreach (SegmentImport se in this)
                 {
-                    if (se.SegmentTable.Equals(item.SegmentTable) &&
+                    if (se.NomSegmentImport.Equals(item.NomSegmentImport) &&
+                        se.SegmentTable.Equals(item.SegmentTable) &&
                         se.NomChampTable.Equals(item.NomChampTable) &&
                         se.ChampFichierMaj.Equals(item.ChampFichierMaj))
                         throw new FileIOError(this.GetType().FullName, "Segment import en double ('" + item.SegmentTable.TableName + "." + item.NomChampTable + "." + item.ChampFichierMaj.Nom + "')");
@@ -1793,11 +1899,11 @@ namespace llt.FileIO.ImportExport
             }
 
             /// <summary>
-            /// Renvoie un tableau des segments imports utilisant le segment table
+            /// Renvoie un tableau des segments imports utilisant le nom de segment import
             /// </summary>
-            /// <param name="segmenttable">Le segment table</param>
+            /// <param name="segmenttable">Le nom segment import</param>
             /// <returns>La liste des segments imports</returns>
-            public SegmentImport[] getImports(DataTable segmenttable)
+            public SegmentImport[] getImports(string nomsegmentimport)
             {
                 // Le tableau des liens
                 SegmentImport[] ses = new SegmentImport[] { };
@@ -1805,7 +1911,7 @@ namespace llt.FileIO.ImportExport
                 // Recherche des dépendances
                 for (int i = 0; i < this.Count; i++)
                 {
-                    if (this[i].SegmentTable.Equals(segmenttable))
+                    if (this[i].NomSegmentImport.Equals(nomsegmentimport))
                     {
                         SegmentImport[] cpses = new SegmentImport[ses.Length + 1];
                         if (ses.Length > 0) ses.CopyTo(cpses, 0);
@@ -1847,7 +1953,7 @@ namespace llt.FileIO.ImportExport
             /// <param name="segmenttable">Le segment table</param>
             /// <param name="segmentfichier">Le segment fichier</param>
             /// <returns>La liste des segments imports</returns>
-            public SegmentImport[] getImports(DataTable segmenttable, SegmentFichier segmentfichier)
+            public SegmentImport[] getImports(string nomsegmentimport, SegmentFichier segmentfichier)
             {
                 // Le tableau des liens
                 SegmentImport[] ses = new SegmentImport[] { };
@@ -1855,7 +1961,7 @@ namespace llt.FileIO.ImportExport
                 // Recherche des dépendances
                 for (int i = 0; i < this.Count; i++)
                 {
-                    if (this[i].SegmentTable.Equals(segmenttable) && segmentfichier.Champs.Contains(this[i].ChampFichierMaj))
+                    if (this[i].NomSegmentImport.Equals(nomsegmentimport) && segmentfichier.Champs.Contains(this[i].ChampFichierMaj))
                     {
                         SegmentImport[] cpses = new SegmentImport[ses.Length + 1];
                         if (ses.Length > 0) ses.CopyTo(cpses, 0);
@@ -1874,12 +1980,22 @@ namespace llt.FileIO.ImportExport
         private class SegmentImport
         {
             // Valeurs privées des propriétés
+            private string nomsegmentimport;
             private DataTable segmenttable;
             private string nomchamptable;
             private ChampFichier champfichiermaj;
 
             /// <summary>
-            /// Le segment table
+            /// Nom du segment import dans la descrition
+            /// </summary>
+            public string NomSegmentImport
+            {
+                get { return nomsegmentimport; }
+                private set { nomsegmentimport = value; }
+            }
+
+            /// <summary>
+            /// Le segment table utilisé par le segment import.
             /// </summary>
             public DataTable SegmentTable
             {
@@ -1908,10 +2024,11 @@ namespace llt.FileIO.ImportExport
             /// <summary>
             /// Créatioh du segment import
             /// </summary>
+            /// <param name="nomSegmentImport">Nom du segment import</param>
             /// <param name="dtExport">La table à utiliser</param>
             /// <param name="segmentsfichier">Les segments fichier à importer</param>
             /// <param name="sc">La chaine contenant la régle de mise à jour</param>
-            internal SegmentImport(DataTable dtExport, SegmentsFichier segmentsfichier, string sc)
+            internal SegmentImport(string nomSegmentImport, DataTable dtExport, SegmentsFichier segmentsfichier, string sc)
             {
                 // Analyse de la syntaxe de la ligne
                 string[] corr = sc.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
@@ -1959,6 +2076,8 @@ namespace llt.FileIO.ImportExport
                 // Test si le nombre d'intération est correcte
                 if (corr.Length < 2 || corr.Length > 3)
                     throw new FileIOError(this.GetType().FullName, "'" + sc + "' a une syntaxe incorrecte");
+                // Le nom du segment import
+                this.NomSegmentImport = nomSegmentImport;
                 // Le segment table
                 this.SegmentTable = dtExport;
                 // Si le champ n'est pas une constante, on vérifie l'existance dans la collection des champs
