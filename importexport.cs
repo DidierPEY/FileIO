@@ -1492,7 +1492,10 @@ namespace llt.FileIO.ImportExport
                                 SegmentImport[] sitinf = Segments.getImports(depInf.Segment.TableName);
                                 foreach (SegmentImport si in sitinf)
                                 {
-                                    si.ChampFichierMaj.SetValue(drinf[si.NomChampTable], ref crsenreg);
+                                    if (si.NomChampTable.StartsWith("="))
+                                        si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref crsenreg);
+                                    else
+                                        si.ChampFichierMaj.SetValue(drinf[si.NomChampTable], ref crsenreg);
                                 }
                                 // On passe à la dépendance supérieure
                                 depInf = depInf.DependDe;
