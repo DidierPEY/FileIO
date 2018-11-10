@@ -1246,7 +1246,7 @@ namespace llt.FileIO.ImportExport
                             }
                             // Maj du fichier
                             bool testAddSeg = (j > 0);
-                            majLiensFichier(j, sittrt, racLF, ref testAddSeg);
+                            LecLiensFichier(j, sittrt, racLF, ref testAddSeg);
                         }
 
                         // Création des enregistrements dans le fichier
@@ -1269,6 +1269,60 @@ namespace llt.FileIO.ImportExport
                             // Si non trouvé c'est une erreur
                             if (lts == null)
                                 throw new FileIOError(this.GetType().FullName, "La segment fichier racine '" + lf.Segment.Nom + "' n'est mis à jour par aucune table");
+
+                            // Est-ce que cette table est utilisée.
+                            SegmentImport[] sit = Segments.getImports(lts.Segment.TableName, lf.Segment);
+                            if (sit.Length == 0) continue;
+                            SegmentImport[] sittrt = sit;
+
+                            // Est-ce que des segments virtuels dépendent de cette table
+                            System.Collections.Hashtable SegmentsVirtuel = importTables.SegmentsVirtuel(lts.Segment.TableName);
+                            // Liste des enregistrements par segment virtuel
+                            Dictionary<string, DataRow[]> SegmentVirtuelEnrs;
+                            if (SegmentsVirtuel.Count == 0)
+                                SegmentVirtuelEnrs = new Dictionary<string, DataRow[]>();
+                            else
+                            {
+                                SegmentVirtuelEnrs = importTables.SegmentVirtuelEnrs(lts.Segment.TableName, SegmentsVirtuel);
+                            }
+                            // Les segment import à utiliser en fonction du segment virtuel
+                            Dictionary<string, SegmentImport[]> sivt = new Dictionary<string, SegmentImport[]>();
+                            foreach (string key in SegmentVirtuelEnrs.Keys)
+                                sivt.Add(key, Segments.getImports(key, lf.Segment));
+
+                            // Traitement de tous les enregistrements de la table
+                            foreach (DataRow dr in lts.Segment.Rows)
+                            {
+                                // Création d'un nouvel enregistrement
+                                TextFileIO._ENREG enreg = lf.Segment.NewEnreg();
+
+                                // Quel segmentimport à utiliser
+                                if (SegmentVirtuelEnrs.Count > 0)
+                                {
+                                    sittrt = sit;
+                                    foreach (KeyValuePair<string, DataRow[]> kvp in SegmentVirtuelEnrs)
+                                    {
+                                        if (Array.IndexOf(kvp.Value, dr) > 0)
+                                        {
+                                            sittrt = sivt[kvp.Key];
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // MAJ des champs
+                                foreach (SegmentImport si in sittrt)
+                                {
+                                    if (!si.NomChampTable.StartsWith("="))
+                                        si.ChampFichierMaj.SetValue(dr[si.NomChampTable], ref enreg);
+                                    else
+                                        si.ChampFichierMaj.SetValue(si.NomChampTable.Substring(1), ref enreg);
+                                }
+
+                                // Ajout de l'enregistrement
+                                Enregistrements.Add(enreg);
+                            }
+                            
                         }
 
                         /* ABANDON DE CE CODE
@@ -1380,11 +1434,11 @@ namespace llt.FileIO.ImportExport
                         // - a chaque changement d'enregistrement pour un segment de profondeur supérieure 
                         // sauf pour le premier enregistrement traité puisque la création aura été faite
                         // par un segment de profondeux inférieur
-                        bool newenreg = false;
+                        //bool newenreg = false;
                         if (depLT.Profondeur == 0 || depLT.Profondeur > 0 && j > 0)
                         {
                             Enregistrements.Add(importFichier.Segments[0].NewEnreg());
-                            newenreg = true;
+                            //newenreg = true;
                         }
 
                         // Etant donné qu'il n'y a qu'un seul segment fichier, tous les segments import
@@ -1402,6 +1456,7 @@ namespace llt.FileIO.ImportExport
                             }
                         }
                         */
+
                         // Quel segmentimport à utiliser
                         if (SegmentVirtuelEnrs.Count > 0)
                         {
@@ -1454,11 +1509,12 @@ namespace llt.FileIO.ImportExport
             }
 
             // Traitement de l'importation dans le cas d'un seul segment table mais plusieurs liens fichier
-            private void majLiensFichier(int iRow, SegmentImport[] sit, LienFichier lf, ref bool testAddSeg)
+            private void LecLiensFichier(int iRow, SegmentImport[] sit, LienFichier lf, ref bool testAddSeg)
             {
                 // Si le test de créaton d'enregistrement est actif, il est définitivement désactivé pour
                 // l'enregistrement en cours de traitement dès que l'on rencontre un segment fichier non unique
                 // de profondeur supérieur à 0. 
+                // REMARQUE: il est IMPORTANT que ce test se fasse même si le segment fichier n'est pas utilisé.
                 if (testAddSeg && lf.Profondeur > 0 && !lf.Unique) testAddSeg = false;
 
                 // Est-que le segment est mis à jour par la table.
@@ -1522,9 +1578,13 @@ namespace llt.FileIO.ImportExport
                 }
 
                 // Traitement des dépendances
-                foreach (LienFichier lfd in importFichier.Liens.getLiens(lf)) majLiensFichier(iRow, sit, lfd, ref testAddSeg);
+                foreach (LienFichier lfd in importFichier.Liens.getLiens(lf)) LecLiensFichier(iRow, sit, lfd, ref testAddSeg);
             }
 
+            private void LecLiensFichierTable(LienFichier lf, LienTables lt = null)
+            {
+
+            }
             /// <summary>
             /// Création des segments import
             /// </summary>
@@ -1656,8 +1716,7 @@ namespace llt.FileIO.ImportExport
                     if (lts != null && lts.Profondeur == lf.Profondeur) return lts;
                 }
                 // Aucune table trouvée
-                // PS : cas d'une segment fichier ne contenant que des valeurs constantes
-                return new LienTables(null, true, false);
+                return null;
             }
 
             // Test uniquement dans le cas d'un seul segment table et plusieurs segments fichiers
