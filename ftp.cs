@@ -471,6 +471,8 @@ namespace llt.FileIO
             // Cré la liste des fichiers susceptibles d'être copiés
             string[] fichiers = PathFiles(srcPathFilesEx, desPathFilesEx);
             if (fichiers.Length == 0) return new string[] { };
+            // Si un seul fichier, on utilise la copie classique
+            if (fichiers.Length == 1) return CopyPathFiles(localTOserveur, fichiers, minutesMaxTrt);
 
             // Liste des copies en cours.
             System.Collections.Generic.List<asyncCopyFile> asyncCopyFiles = new List<asyncCopyFile>();
@@ -661,6 +663,65 @@ namespace llt.FileIO
             }
         }
 
+        /// <summary>
+        /// Renomme un fichier
+        /// </summary>
+        /// <param name="local">Si vrai, l'opération a lieu sur LocalPath sinon sur ServeurPath</param>
+        /// <param name="fichier">Le nom de fichier à renommer</param>
+        /// <param name="rfichier">Le nom du fichier renommé</param>
+        /// <returns>Vrai si l'opération a réussi</returns>
+        public bool RenFile(bool local, string fichier, string rfichier)
+        {
+            // Lest objets permettant l'accès au serveur
+            System.Net.FtpWebRequest fwr = null;
+            System.Net.FtpWebResponse fwp = null;
+
+            // Test si le fichier existe
+            if (!ExistFile(local, fichier)) return false;
+            // Test si le fichier destination existe
+            if (ExistFile(local, rfichier)) return false;
+
+            try
+            {
+                if (local)
+                    System.IO.File.Move(LocalPath + System.IO.Path.DirectorySeparatorChar + fichier, LocalPath + System.IO.Path.DirectorySeparatorChar + rfichier);
+                else
+                {
+                    // L'objet permettant l'accès au serveur
+                    fwr = CreFwr(fichier);
+                    fwr.Method = System.Net.WebRequestMethods.Ftp.Rename;
+                    fwr.RenameTo = rfichier;
+
+                    // Exécute la requête.
+                    // NOTA: on ne s'occupe pas du résultat de la réponse.
+                    fwp = (System.Net.FtpWebResponse)fwr.GetResponse();
+                }
+
+                return true;
+            }
+            catch (FileIOError)
+            {
+                throw;
+            }
+            catch (System.Exception eh)
+            {
+                // Création d'une erreur de type FileIOError
+                throw new FileIOError("RenFile_BasicFTP", "Impossible de renommer le fichier '" + fichier + "' en '" + rfichier + "'", eh);
+            }
+            finally
+            {
+                if (fwp != null)
+                {
+                    try
+                    {
+                        fwp.Close();
+                    }
+                    catch { }
+                    fwp = null;
+                }
+                if (fwr != null) fwr = null;
+            }
+        }
         /// <summary>
         /// Test si un fichier existe
         /// </summary>
