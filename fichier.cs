@@ -1191,6 +1191,46 @@ namespace llt.FileIO.ImportExport
                 }
                 return null;            
             }
+
+            /// <summary>
+            /// Retourne le lien suivant.
+            /// </summary>
+            /// <param name="lf">Le lien en cours</param>
+            /// <param name="ignDep">Si vrai, la recherche se fait sans prendre les dépendances de <paramref name="lf"/></param>
+            /// <returns>Le lien suivant ou null si non trouvé</returns>
+            public LienFichier getLienSuivant(LienFichier lf, bool ignDep = false)
+            {
+                // Est-ce que ce lien a des dépendances.
+                // Si c'est le cas, on renvoie le premier trouvé.
+                LienFichier[] lfs = null;
+                if (!ignDep)
+                {
+                    lfs = getLiens(lf);
+                    if (lfs.Length > 0) return lfs[0];
+                }
+                LienFichier trtLF = lf;
+                while (trtLF != null)
+                {
+                    // Recherche du lien suivant de même niveau
+                    if (trtLF.DependDe == null) return null;
+                    lfs = getLiens(trtLF.DependDe);
+                    LienFichier lfSuiv = null;
+                    for (int i = 0; i < lfs.Length; i++)
+                    {
+                        if (lfs[i].Equals(trtLF))
+                        {
+                            i++;
+                            if (i < lfs.Length) lfSuiv = lfs[i];
+                            break;
+                        }
+                    }
+                    if (lfSuiv != null) return lfSuiv;
+                    // On descend d'un niveau
+                    trtLF = trtLF.DependDe;
+                }
+                // Plus de lien suivant
+                return null;
+            }
             /// <summary>
             /// Retourne les liens pour lesquels un segment est dépendant du segment passé en paramètre
             /// </summary>
@@ -1983,6 +2023,7 @@ namespace llt.FileIO.ImportExport
                     {
                         if (!Char.IsControl(c)) sc = sc + c.ToString();
                     }
+                    sc = sc.Trim(); // Supprime les espaces inutiles
                     if (sc.Equals("")) continue; // Si chaine vide, on passe à l'occurence suivante.
                     // La chaine doit au moins commencer par un point
                     if (!sc.StartsWith("."))

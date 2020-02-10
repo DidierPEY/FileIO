@@ -132,13 +132,14 @@ namespace llt.FileIO.ImportExport
             /// </summary>
             /// <param name="segmentvirtuelde">Le segment table</param>
             /// <param name="segmentsvirtuel">La liste des segments virtuels</param>
+            /// <param name="where">Contient une chaine SQL permettant de limiter la sélection des enregistrement</param>
             /// <returns>Renvoie un liste (vide si aucun enregistrement)</returns>
-            internal Dictionary<string,DataRow[]> SegmentVirtuelEnrs(string segmentvirtuelde, System.Collections.Hashtable segmentsvirtuel)
+            internal Dictionary<string, DataRow[]> SegmentVirtuelEnrs(string segmentvirtuelde, System.Collections.Hashtable segmentsvirtuel, string where = "")
             {
                 Dictionary<string, DataRow[]> segmentsvirtuelenrs = new Dictionary<string, DataRow[]>();
                 foreach (object key in segmentsvirtuel.Keys)
                 {
-                    DataRow[] drs = dsinterne.Tables[segmentvirtuelde].Select(segmentsvirtuel[key].ToString());
+                    DataRow[] drs = dsinterne.Tables[segmentvirtuelde].Select(where + (where == "" ? "" : " and ") + segmentsvirtuel[key].ToString());
                     if (drs.Length > 0) segmentsvirtuelenrs.Add(key.ToString(), drs);
                 }
                 return segmentsvirtuelenrs;
@@ -358,9 +359,8 @@ namespace llt.FileIO.ImportExport
                     {
                         if (!Char.IsControl(c)) sc = sc + c.ToString();
                     }
+                    sc = sc.Trim(); // Supprime les espaces inutiles
                     if (sc.Equals("")) continue; // Si chaine vide, on passe à l'occurence suivante.
-                    // Suppression des éventuels espaces de démarrage
-                    sc = sc.TrimStart(new char[] { ' ' });
                     // La chaine doit au moins commencer par un point
                     if (!sc.StartsWith("."))
                         throw new FileIOError(this.GetType().FullName, "Un lien doit obligatoirement commencer par un '.'");
@@ -746,7 +746,7 @@ namespace llt.FileIO.ImportExport
             /// IMPORTANT : l'enregistrement n'est pas créé dans table de ce lien mais uniquement
             /// dans la liste des enregistrement à ajouter.
             /// </remarks>
-            internal void addEnregistrement()
+            internal void addEnregistrement(string[] ignChampsFils)
             {
                 // Création de la liste si nécessaire
                 if (Enregistrements == null) Enregistrements = new List<DataRow>();
@@ -757,7 +757,17 @@ namespace llt.FileIO.ImportExport
                 {
                     for (int i = 0; i < ChampsPere.Length; i++)
                     {
-                        crsEnregistrement[ChampsFils[i]] = DependDe.crsEnregistrement[ChampsPere[i]];
+                        bool ignChampFils = false;
+                        foreach (string cf in ignChampsFils)
+                        {
+                            if (ChampsFils[i].Equals(cf,StringComparison.CurrentCultureIgnoreCase))
+                            {
+                               ignChampFils=true;
+                               break;
+                            }
+                        }
+                        if (!ignChampFils)
+                            crsEnregistrement[ChampsFils[i]] = DependDe.crsEnregistrement[ChampsPere[i]];
                     }
                 }
             }
@@ -809,13 +819,28 @@ namespace llt.FileIO.ImportExport
             /// <remarks>Si <paramref name="dependde"/> est null, tous les enregistrement de la table sont renvoyés</remarks>
             internal DataRow[] getRows(DataRow dependde)
             {
-                // Lien racine
-                if (dependde == null)
-                    return Segment.Select();
-                else
+                // Si clé primaire, on tri par la clé primaire
+                string tri = "";
+                foreach (DataColumn dc in Segment.PrimaryKey)
                 {
-                    // Création du critère de sélection
-                    string where = "";
+                    if (!tri.Equals("")) tri = tri + ",";
+                    tri = tri + dc.ColumnName;
+                }
+                // Renvoie les enregistrements correspondant à ce critére
+                return (tri.Equals("") ? Segment.Select(getRowsWhere(dependde)) : Segment.Select(getRowsWhere(dependde), tri));
+            }
+
+            /// <summary>
+            /// Renvoie une chaine SQL pour sélectionner les enregistrement en lien avec <paramref name="dependde"/>
+            /// </summary>
+            /// <param name="dependde">L'enregistrement père</param>
+            /// <returns>La chaine SQL à utiliser dans une clause WHERE</returns>
+            /// <remarks>Si <paramref name="dependde"/> est null, la chaine renvoyée est vide</remarks>
+            internal string getRowsWhere(DataRow dependde)
+            {
+                string where = "";
+                if (dependde != null)
+                {
                     for (int i = 0; i < ChampsPere.Length; i++)
                     {
                         if (!where.Equals("")) where = where + " and ";
@@ -834,9 +859,8 @@ namespace llt.FileIO.ImportExport
                                 break;
                         }
                     }
-                    // Renvoie les enregistrements correspondant à ce critére
-                    return Segment.Select(where);
                 }
+                return where;
             }
             /// <summary>
             /// Test si le lien parent ne contient pas le segment fils.
