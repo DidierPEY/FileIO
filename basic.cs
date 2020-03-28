@@ -48,11 +48,11 @@ namespace llt.FileIO
         /// <summary>
         /// Pointe sur la méthode à appeler lorsque l'entrée/sortie est terminée.
         /// </summary>
-        private AsyncCallback ac;
+        //private AsyncCallback ac;
         /// <summary>
         /// Indique qu'un autre opération d'entrèe/sortie peut-être demandée.
         /// </summary>
-        private System.Threading.ManualResetEvent wcontinue;
+        //private System.Threading.ManualResetEvent wcontinue;
         /// <summary>
         /// Indique que plus aucune entrèe/sortie ne peut-être demandée.
         /// </summary>
@@ -184,15 +184,15 @@ namespace llt.FileIO
             if (!async)
             {
                 buffersize = 32 * 1024; // En lecture synchrone, le buffer est de 32ko
-                ac = null;
-                wcontinue = null;
+                //ac = null;
+                //wcontinue = null;
                 wstop = null;
             }
             else
             {
                 buffersize = 512 * 1024; // En lecture asynchrone, le buffer est de 512ko
-                ac = new AsyncCallback(IOFaite);
-                wcontinue = new System.Threading.ManualResetEvent(false);
+                //ac = new AsyncCallback(IOFaite);
+                //wcontinue = new System.Threading.ManualResetEvent(false);
                 wstop = new System.Threading.ManualResetEvent(false);
             }
 
@@ -280,41 +280,27 @@ namespace llt.FileIO
                 }
 
                 // Traitement de la lecture
+                int nbio = 0;
+                long offset = fs.Position;
                 if (!fs.IsAsync)
                 {
                     // Lecture en mode synchrone
-                    long offset = fs.Position;
-                    int nbio = fs.Read(IOBuffer, 0, nbioread);
-                    // La lecture est effectuée.
-                    if (nbio > 0)
-                    {
-                        _INFOTRT trt = new _INFOTRT();
-                        trt.typetrt = TypeTrtEnum.lecturefaite;
-                        trt.nbio = nbio;
-                        trt.offset = offset;
-                        trt.buffer = (byte[])IOBuffer.Clone();
-                        return qAdd(trt);
-                    }
-                    else
-                    {
-                        // NOTA : il peut s'agir d'une fin de fichier. On envoie
-                        // donc une lecturefaite mais avec nbio à 0 afin de la signaler.
-                        _INFOTRT trt = new _INFOTRT();
-                        trt.typetrt = TypeTrtEnum.lecturefaite;
-                        trt.nbio = 0;
-                        trt.offset = 0;
-                        trt.buffer = new byte[]{};
-                        qAdd(trt);
-                        return false;
-                    }
+                    nbio = fs.Read(IOBuffer, 0, nbioread);
                 }
                 else
                 {
+                    // Mémorisation de la position
+                    long position=fs.Position;
+                    System.Threading.Tasks.Task<int> t = fs.ReadAsync(IOBuffer, 0, nbioread);
+                    // Prévient que la lecture asynchrone est en cours.
+                    OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.lectureencours, nbioread, position, null));
+                    // Attend la lecture
+                    t.Wait();
+                    nbio = t.Result;
+                    /*
                     // Initialisation des attentes.
                     wcontinue.Reset();
                     wstop.Reset();
-                    // Mémorisation de la position
-                    long position=fs.Position;
                     // Lecture en mode asynchrone.
                     fs.BeginRead(IOBuffer, 0, nbioread, ac, new object[] { TypeIOEventEnum.lecturefaite, position });
                     // Prévient que la lecture asynchrone est en cours.
@@ -322,6 +308,29 @@ namespace llt.FileIO
                     // Attend la fin du traitement de la lecture.
                     int wh=System.Threading.WaitHandle.WaitAny(new System.Threading.WaitHandle[] {wstop,wcontinue});
                     if (wh == 0) return false; else return true;
+                    */
+                }
+                // La lecture est effectuée.
+                if (nbio > 0)
+                {
+                    _INFOTRT trt = new _INFOTRT();
+                    trt.typetrt = TypeTrtEnum.lecturefaite;
+                    trt.nbio = nbio;
+                    trt.offset = offset;
+                    trt.buffer = (byte[])IOBuffer.Clone();
+                    return qAdd(trt);
+                }
+                else
+                {
+                    // NOTA : il peut s'agir d'une fin de fichier. On envoie
+                    // donc une lecturefaite mais avec nbio à 0 afin de la signaler.
+                    _INFOTRT trt = new _INFOTRT();
+                    trt.typetrt = TypeTrtEnum.lecturefaite;
+                    trt.nbio = 0;
+                    trt.offset = 0;
+                    trt.buffer = new byte[] { };
+                    qAdd(trt);
+                    return false;
                 }
             }
             catch (FileIOError)
@@ -385,6 +394,8 @@ namespace llt.FileIO
                 // Lecture du fichier
                 while (ReadFile(nbioread))
                 {
+                    // Vérifie si le traitement n'est pas arrêté.
+                    if (wstop != null && wstop.WaitOne(0)) break;
                 }
                 // On attend que tous les traitements soient terminés
                 WaitAllIO();
@@ -462,16 +473,16 @@ namespace llt.FileIO
             // Test si les paramètres sont correctes.
             if (fs == null) return;
             if (nbio == 0) return;
+            // Test position
+            if (offset != long.MinValue)
+            {
+                if (fs.Position != offset) fs.Position = offset;
+            }
+            else
+                offset = fs.Position;
             // Traitement de l'écriture
             if (!fs.IsAsync)
             {
-                // Test position
-                if (offset != long.MinValue)
-                {
-                    if (fs.Position != offset) fs.Position = offset;
-                }
-                else
-                    offset = fs.Position;
                 // Ecriture en mode synchrone
                 fs.Write(buffer, 0, nbio);
                 // L'écriture est effectuée.
@@ -481,16 +492,20 @@ namespace llt.FileIO
             }
             else
             {
+                // Ecriture en mode asynchrone.
+                System.Threading.Tasks.Task t = fs.WriteAsync(buffer, 0, nbio);
+                // Prévient que la lecture asynchrone est en cours.
+                OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.ecritureencours, nbio, offset, null));
+                t.Wait();
+                // L'écriture est effectuée.
+                OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.ecriturefaite, nbio, offset, null));
+                // Avertit si dernier traitement effectué
+                qSignalAll();
+
+                /*
                 // Initialisation des attentes.
                 wcontinue.Reset();
                 wstop.Reset();
-                // Test position
-                if (offset != long.MinValue)
-                {
-                    if (fs.Position != offset) fs.Position = offset;
-                }
-                else
-                    offset = fs.Position;
                 // Ecriture en mode asynchrone.
                 fs.BeginWrite(buffer, 0, nbio, ac, new object[] { TypeIOEventEnum.ecriturefaite,offset });
                 // Prévient que la lecture asynchrone est en cours.
@@ -499,6 +514,7 @@ namespace llt.FileIO
                 int wh = System.Threading.WaitHandle.WaitAny(new System.Threading.WaitHandle[] { wstop, wcontinue });
                 // Avertit si dernier traitement effectué
                 qSignalAll();
+                */
             }
         }
 
@@ -511,6 +527,7 @@ namespace llt.FileIO
             if (BasicFileIOEvent != null) BasicFileIOEvent(this, bfioargs);
         }
 
+        /*
         /// <summary>
         /// Prévient que l'opération d'entrée/sortie est effectuée.
         /// </summary>
@@ -610,6 +627,7 @@ namespace llt.FileIO
                 asyncErreur = eh;
             }
         }
+        */
 
         /// <summary>
         /// Ajoute un traitement dans la file d'attente et le signal.
@@ -908,7 +926,7 @@ namespace llt.FileIO
                 // Fermeture des pointeurs de lecture.
                 if (dispose)
                 {
-                    if (wcontinue != null) wcontinue.Close();
+                    //if (wcontinue != null) wcontinue.Close();
                     if (wstop != null) wstop.Close();
                 }
             }
@@ -918,7 +936,7 @@ namespace llt.FileIO
             finally
             {
                 fs = null;
-                wcontinue = null;
+                //wcontinue = null;
                 wstop = null;
                 qcontinue = null;
                 qstop = null;

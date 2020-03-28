@@ -92,10 +92,20 @@ namespace llt.Test
                 else if (sender.Equals(btnTestFTP))
                 {
                     //llt.FileIO.BasicFTP bftp = new BasicFTP("213.251.149.243", "llt34", "net-llt2648",true, "/update", "c:\\tmp\\test");
-                    llt.FileIO.BasicFTP bftp = new BasicFTP("ftp.dilicom.net", "55916912", "TECH0402", false, "/pub/O", "c:\\tmp\\test");
-                    bftp.OWRFichierCopie = true;
-                    bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.sicopie;
-                    bftp.CopyPathFiles(false, "[0-9]");
+                    //llt.FileIO.BasicFTP bftp = new BasicFTP("ftp.dilicom.net", "55916912", "TECH0402", false, "/pub/O", "c:\\tmp\\test");
+                    //llt.FileIO.BasicFTP bftp = new BasicFTP("ftp-client.netlor.fr", "photos_llt_orig", "chi7Caez", false, "/", "c:\\temp\\test");
+                    llt.FileIO.BasicFTP bftp = new BasicFTP("ftp-client.netlor.fr", "photos_interdacta_orig", "eeSh9eo9", false, "/", "c:\\temp\\test");
+                    bftp.OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent;
+                    bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
+                    //System.Collections.Generic.Dictionary<string, DateTime> srcFichiers = bftp.PathFilesEx(false, "['k'-*].['jpg']");
+                    //string[] fichiers = bftp.CopyPathFilesEx(false, "['k661'-*].['jpg']", 20);
+                    /*
+                    System.Collections.Generic.Dictionary<string, DateTime> srcFichiers = bftp.PathFilesEx(false, "['3277450027'-*].['jpg']");
+                    System.Collections.Generic.Dictionary<string, DateTime> desFichiers = bftp.PathFilesEx(true, "['3277450027'-*].['jpg']");
+                    string[] fichiers = bftp.PathFiles(srcFichiers, desFichiers);
+                     */
+                    string[] fichiers = bftp.CopyPathFilesEx(false, "['k010'-*].['jpg']", 1, 10);
+                    //bftp.CopyPathFiles(false, "['3277450027'-*].['jpg']");
                     //bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
                     //bftp.CopyFile(false, "02938087");
                     //bftp.DelFile(false, "02938087");
@@ -107,10 +117,11 @@ namespace llt.Test
                     //bftp.OWRFichierCopie = true;
                     //bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
                     //bftp.CopyPathFiles(true, "[0-9]");
-                    llt.FileIO.BasicFTP bftp = new BasicFTP("213.251.149.243", "interdacta", "zaib8IeS", true);
-                    bftp.ServeurPath = "/CATALOGUE 2016/TELECHARGEMENTS EFFECTUES";
-                    string[] fichiers = bftp.PathFiles(false, "['k'-*].['']");
+                    //llt.FileIO.BasicFTP bftp = new BasicFTP("213.251.149.243", "interdacta", "zaib8IeS", true);
+                    //bftp.ServeurPath = "/CATALOGUE 2016/TELECHARGEMENTS EFFECTUES";
+                    //string[] fichiers = bftp.PathFiles(false, "['k'-*].['']");
                     //string[] fichiers = bftp.PathFiles(false, "['k'-*].['jpg']");
+                    /*
                     foreach (string photo in fichiers)
                     {
                         bftp.LocalPath = "C:\\Developpement\\Site Internet\\NetLorPhotos";
@@ -120,6 +131,12 @@ namespace llt.Test
                             bftp.CopyFile(false, photo);
                         }
                     }
+                     */
+                    llt.FileIO.BasicFTP bftp = new BasicFTP("ftp-client.netlor.fr", "photos_llt", "siato9Oh", false, "/", "c:\\temp\\test");
+                    bftp.OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.oui;
+                    bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
+                    //bftp.CopyPathFiles(true, "['3277450027'-*].['jpg']");
+                    bftp.CopyFile(true, "articles.csv");
                 }
                 else if (sender.Equals(btnChgRows))
                 {
@@ -196,7 +213,7 @@ namespace llt.Test
                     DataSet h = dgvExport.DataSource as DataSet;
                     if (h == null) return;
                     // Test valeur null
-                    h.Tables[0].Rows[0][2] = System.DBNull.Value;
+                    //h.Tables[0].Rows[0][2] = System.DBNull.Value;
                     // Lancement de l'exportation
                     FileIO.ImportExport.Convert cv;            
                     if (!txtXML2.Text.Equals(""))
@@ -215,7 +232,9 @@ namespace llt.Test
             }
             catch (System.Exception eh)
             {
-                System.Windows.Forms.MessageBox.Show(eh.Message);
+                string message = eh.Message;
+                if (eh.InnerException != null) message = message + "\n" + eh.InnerException.Message;
+                System.Windows.Forms.MessageBox.Show(message);
             }
         }
 

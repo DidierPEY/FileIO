@@ -246,6 +246,7 @@
             this.btnTestFTP.TabIndex = 25;
             this.btnTestFTP.Text = "Test Dowload FTP";
             this.btnTestFTP.UseVisualStyleBackColor = true;
+            this.btnTestFTP.Click += new System.EventHandler(this.btn_click);
             // 
             // tabPage0
             // 
