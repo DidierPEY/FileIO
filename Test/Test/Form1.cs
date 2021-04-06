@@ -104,7 +104,8 @@ namespace llt.Test
                     System.Collections.Generic.Dictionary<string, DateTime> desFichiers = bftp.PathFilesEx(true, "['3277450027'-*].['jpg']");
                     string[] fichiers = bftp.PathFiles(srcFichiers, desFichiers);
                      */
-                    string[] fichiers = bftp.CopyPathFilesEx(false, "['k010'-*].['jpg']", 1, 10);
+                    //string[] fichiers = bftp.CopyPathFilesEx(false, "['k010'-*].['jpg']", 1, 10);
+                    string[] fichiers = bftp.CopyPathFilesEx(false, "['K'-*].['jpg']", 1, 10);
                     //bftp.CopyPathFiles(false, "['3277450027'-*].['jpg']");
                     //bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
                     //bftp.CopyFile(false, "02938087");
