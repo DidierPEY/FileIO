@@ -94,7 +94,7 @@ namespace llt.Test
                     //llt.FileIO.BasicFTP bftp = new BasicFTP("213.251.149.243", "llt34", "net-llt2648",true, "/update", "c:\\tmp\\test");
                     //llt.FileIO.BasicFTP bftp = new BasicFTP("ftp.dilicom.net", "55916912", "TECH0402", false, "/pub/O", "c:\\tmp\\test");
                     //llt.FileIO.BasicFTP bftp = new BasicFTP("ftp-client.netlor.fr", "photos_llt_orig", "chi7Caez", false, "/", "c:\\temp\\test");
-                    llt.FileIO.BasicFTP bftp = new BasicFTP("ftp-client.netlor.fr", "photos_interdacta_orig", "eeSh9eo9", false, "/", "c:\\temp\\test");
+                    llt.FileIO.BasicFTP bftp = new BasicFTP("ftp-client.netlor.fr", "photos_interdacta_orig", "eeSh9eo9", false, "/", "C:\\Developpement\\llt5\\Outils\\FileIO\\Test\\Test\\bin\\Debug\\Photos");
                     bftp.OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent;
                     bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
                     //System.Collections.Generic.Dictionary<string, DateTime> srcFichiers = bftp.PathFilesEx(false, "['k'-*].['jpg']");

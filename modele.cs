@@ -326,7 +326,8 @@ namespace llt.FileIO
             else
             {
                 // A ce stade il s'agit forcément du modèle ['caractère(s)'-*] ou ['caractère(s)']
-                if (modele.EndsWith("-*"))
+                // ATTENTION : seule caractères(s) est conservé au niveau du modele
+                if (modele.EndsWith("*"))
                     return testchaine.StartsWith(modele.Substring(0, modele.Length - 2), StringComparison.CurrentCultureIgnoreCase);
                 else
                     return testchaine.Equals(modele, StringComparison.CurrentCultureIgnoreCase);

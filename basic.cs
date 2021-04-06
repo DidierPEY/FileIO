@@ -420,9 +420,13 @@ namespace llt.FileIO
         /// <returns>Vrai si l'ajout a été effectué</returns>
         /// <remarks>
         /// IMPORTANT : 
+        /// <para>
         /// - à ce stade, l'écriture réelle sur le disque n'est pas encore faite
+        /// </para>
+        /// <para>
         /// - l'ecriture dans le fichier se fera à partir de la position courante
         /// au moment ou se fait l'écriture.
+        /// </para>
         /// </remarks>
         public bool WriteFile(int nbiowrite, byte[] buffer)
         {
