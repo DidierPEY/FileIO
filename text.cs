@@ -942,10 +942,7 @@ namespace llt.FileIO
         {
             try
             {
-                if (bfio != null)
-                {
-                    if (dispose) bfio.Dispose();
-                }
+                if (bfio != null) bfio.Dispose();
             }
             catch
             {
