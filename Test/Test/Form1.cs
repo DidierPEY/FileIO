@@ -174,13 +174,6 @@ namespace llt.Test
                             txtDelChamp.Text.Equals("") ? ' ' : txtDelChamp.Text[0],
                             dt, chkNomChamp.Checked);
                         dgv.DataSource = dt;
-                        /*
-                        // Test WriteRows
-                        TextFileIO.WriteRows(txtFile2.Text + ".dbg", finenr,
-                            txtSepChamp.Text.Equals("") ? ' ' : txtSepChamp.Text[0],
-                            txtDelChamp.Text.Equals("") ? ' ' : txtDelChamp.Text[0],
-                            dt, chkNomChamp.Checked);
-                         */
                     }
                     catch (System.Exception eh)
                     {

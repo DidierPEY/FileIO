@@ -460,7 +460,7 @@
             this.txtFile2.Name = "txtFile2";
             this.txtFile2.Size = new System.Drawing.Size(203, 20);
             this.txtFile2.TabIndex = 15;
-            this.txtFile2.Text = "c:\\tmp\\extraction.txt";
+            this.txtFile2.Text = ".\\exemple.csv";
             // 
             // chkNomChamp
             // 
