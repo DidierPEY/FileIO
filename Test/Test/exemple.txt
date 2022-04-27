@@ -1,0 +1,3 @@
+Exemple fichier texte encodé en ASCII.
+Il est utilisé dans le cas de la lecture fichier.
+Ce fichier est également utilisé pour un test d'UpLoad sur un site FTP.
