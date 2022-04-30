@@ -46,14 +46,6 @@ namespace llt.FileIO
         /// </summary>
         private FileStream fs;
         /// <summary>
-        /// Pointe sur la méthode à appeler lorsque l'entrée/sortie est terminée.
-        /// </summary>
-        //private AsyncCallback ac;
-        /// <summary>
-        /// Indique qu'un autre opération d'entrèe/sortie peut-être demandée.
-        /// </summary>
-        //private System.Threading.ManualResetEvent wcontinue;
-        /// <summary>
         /// Indique que plus aucune entrèe/sortie ne peut-être demandée.
         /// </summary>
         private System.Threading.ManualResetEvent wstop;
@@ -184,15 +176,11 @@ namespace llt.FileIO
             if (!async)
             {
                 buffersize = 32 * 1024; // En lecture synchrone, le buffer est de 32ko
-                //ac = null;
-                //wcontinue = null;
                 wstop = null;
             }
             else
             {
                 buffersize = 512 * 1024; // En lecture asynchrone, le buffer est de 512ko
-                //ac = new AsyncCallback(IOFaite);
-                //wcontinue = new System.Threading.ManualResetEvent(false);
                 wstop = new System.Threading.ManualResetEvent(false);
             }
 
@@ -297,18 +285,6 @@ namespace llt.FileIO
                     // Attend la lecture
                     t.Wait();
                     nbio = t.Result;
-                    /*
-                    // Initialisation des attentes.
-                    wcontinue.Reset();
-                    wstop.Reset();
-                    // Lecture en mode asynchrone.
-                    fs.BeginRead(IOBuffer, 0, nbioread, ac, new object[] { TypeIOEventEnum.lecturefaite, position });
-                    // Prévient que la lecture asynchrone est en cours.
-                    OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.lectureencours,nbioread,position,null));
-                    // Attend la fin du traitement de la lecture.
-                    int wh=System.Threading.WaitHandle.WaitAny(new System.Threading.WaitHandle[] {wstop,wcontinue});
-                    if (wh == 0) return false; else return true;
-                    */
                 }
                 // La lecture est effectuée.
                 if (nbio > 0)
@@ -391,6 +367,7 @@ namespace llt.FileIO
                 if (asyncErreur != null) asyncErreur = null;
                 // On désactive le signalement de fin de traitement
                 qsignalltrt = false;
+                qalltrt.Reset();
                 // Lecture du fichier
                 while (ReadFile(nbioread))
                 {
@@ -505,20 +482,6 @@ namespace llt.FileIO
                 OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.ecriturefaite, nbio, offset, null));
                 // Avertit si dernier traitement effectué
                 qSignalAll();
-
-                /*
-                // Initialisation des attentes.
-                wcontinue.Reset();
-                wstop.Reset();
-                // Ecriture en mode asynchrone.
-                fs.BeginWrite(buffer, 0, nbio, ac, new object[] { TypeIOEventEnum.ecriturefaite,offset });
-                // Prévient que la lecture asynchrone est en cours.
-                OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.ecritureencours,nbio,offset,null));
-                // Attend la fin du traitement de la lecture.
-                int wh = System.Threading.WaitHandle.WaitAny(new System.Threading.WaitHandle[] { wstop, wcontinue });
-                // Avertit si dernier traitement effectué
-                qSignalAll();
-                */
             }
         }
 
@@ -530,108 +493,6 @@ namespace llt.FileIO
         {
             if (BasicFileIOEvent != null) BasicFileIOEvent(this, bfioargs);
         }
-
-        /*
-        /// <summary>
-        /// Prévient que l'opération d'entrée/sortie est effectuée.
-        /// </summary>
-        /// <param name="ar">Le résultat de l'entrée/sortie</param>
-        /// <remarks>
-        /// ATTENTION : Cette méthode est traitée dans un thread spécifique créé par
-        /// l'opération d'entrée/sortie asynchrone.
-        /// </remarks>
-        private void IOFaite(IAsyncResult ar)
-        {
-            // Si une demande d'arrêt de traitement des IO a été faite, on sort.
-            // Cela se produit dans le cas ou une erreur à lieu au sein du thread
-            // de traitement (qthrdTrt) alors que l'opération asynchrone d'I/O
-            // était en cours.
-            if (wstop.WaitOne(0)) return;
-
-            // On initialise l'erreur asynchrone.
-            asyncErreur = null;
-
-            // Recherche de type d'évènement.
-            try
-            {
-                // On convertit en tableau d'objet
-                object[] asyncstate = (object[])ar.AsyncState;
-                // Détermine le type d'évènement
-                TypeIOEventEnum typeioevent = (TypeIOEventEnum)asyncstate[0];
-                // Prévient que l'opération d'entrée sortie est faite.
-                if (typeioevent.Equals(TypeIOEventEnum.lecturefaite))
-                {
-                    // L'offset dans le fichier.
-                    long offset = (long)asyncstate[1];
-                    // Recherche du nombre de byte lus.
-                    int nbio = fs.EndRead(ar);
-                    // Indique si on peut continuer la lecture asynchrone.
-                    if (nbio > 0)
-                    {
-                        // Ajoute dans le tableau des traitement.
-                        _INFOTRT trt = new _INFOTRT();
-                        trt.typetrt = TypeTrtEnum.lecturefaite;
-                        trt.nbio = nbio;
-                        trt.offset = offset;
-                        trt.buffer = (byte[])IOBuffer.Clone();
-                        qAdd(trt);
-                        
-                        // Une prochaine lecture peut avoir lieu.
-                        lock (wcontinue)
-                        {
-                            wcontinue.Set();
-                        }
-                    }
-                    else
-                    {
-                        // Il peut s'agir d'une fin de fichier. On envoie
-                        // donc une lecturefaite mais avec nbio à 0 afin de la signaler.
-                        _INFOTRT trt = new _INFOTRT();
-                        trt.typetrt = TypeTrtEnum.lecturefaite;
-                        trt.nbio = 0;
-                        trt.offset = 0;
-                        trt.buffer = new byte[] { };
-                        qAdd(trt);
-
-                        // Plus de lecture.
-                        lock (wstop)
-                        {
-                            wstop.Set();
-                        }
-                    }
-                }
-                else if (typeioevent.Equals(TypeIOEventEnum.ecriturefaite))
-                {
-                    // L'offset dans le fichier.
-                    long offset = (long)asyncstate[1];
-                    // Recherche du nombre de byte écrits.
-                    fs.EndWrite(ar);
-                    // Avertit qu'une écritue est faite.
-                    OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.ecriturefaite,0,offset,null));
-                    // Indique si on peut continuer l'écriture asynchrone.
-                    lock (wcontinue)
-                    {
-                        wcontinue.Set();
-                    }
-                }
-            }
-            catch (System.Exception eh)
-            {
-                // On arrête toute opération asynchrone.
-                lock (wstop)
-                {
-                    wstop.Set();
-                }
-                // On arrête tous les opérations sur le thread de traitement.
-                lock (qstoptrt)
-                {
-                    qstoptrt.Set();
-                }
-                // Consignation de l'erreur asynchrone.
-                asyncErreur = eh;
-            }
-        }
-        */
 
         /// <summary>
         /// Ajoute un traitement dans la file d'attente et le signal.
@@ -647,15 +508,8 @@ namespace llt.FileIO
             lock (qTrt)
             {
                 qTrt.Enqueue(trt);
-            }
-            // Demande de lancer le traitement si nécessaire.
-            bool h = qcontinue.WaitOne(0);
-            if (!h)
-            {
-                lock (qcontinue)
-                {
-                    qcontinue.Set();
-                }
+                // Demande de lancer le traitement si nécessaire.
+                if (!qcontinue.WaitOne(0)) qcontinue.Set();
             }
 
             // Si plus de 20 traitements en attente, c'est que le temps
@@ -689,24 +543,19 @@ namespace llt.FileIO
         /// </remarks>
         public void WaitAllIO()
         {
-            // Il faut signaler lorsque tous les traitements fait
-            if (!qsignalltrt) qsignalltrt = true;
-            // On initilialise l'évènement
-            lock (qalltrt)
+            // Si le traitement n'a pas déjà été arrêté
+            if (wstop == null || !wstop.WaitOne(0))
             {
-                qalltrt.Reset();
-            }
-            // On signal qcontinue pour forcer un traitement même à vide.
-            bool h = qcontinue.WaitOne(0);
-            if (!h)
-            {
-                lock (qcontinue)
+                // Il faut signaler lorsque tous les traitements fait
+                if (!qsignalltrt) qsignalltrt = true;
+                // On signal qcontinue pour forcer un traitement même à vide.
+                lock (qTrt)
                 {
-                    qcontinue.Set();
+                    if (!qcontinue.WaitOne(0)) qcontinue.Set();
                 }
+                // Attente fin de traitement
+                qalltrt.WaitOne();
             }
-            // Attente fin de traitement
-            qalltrt.WaitOne();
             // Si erreur asynchrone, on la signale.
             if (asyncErreur != null) throw asyncErreur;
         }
@@ -735,13 +584,7 @@ namespace llt.FileIO
             {
                 lock (qTrt)
                 {
-                    if (qTrt.Count == 0)
-                    {
-                        lock (qalltrt)
-                        {
-                            qalltrt.Set();
-                        }
-                    }
+                    if (qTrt.Count == 0) qalltrt.Set();
                 }
             }
         }
@@ -764,18 +607,11 @@ namespace llt.FileIO
                     // Si demande d'arrêt du thread
                     if (q == 0)
                     {
-                        // Arrêt des lectures asynchrone.
-                        if (wstop != null && !wstop.WaitOne(0))
-                        {
-                            lock (wstop)
-                            {
-                                wstop.Set();
-                            }
-                        }
                         // Suppression de tous les traitements.
                         lock (qTrt)
                         {
                             qTrt.Clear();
+                            if (wstop != null && !wstop.WaitOne(0)) wstop.Set();
                         }
                         // Signal la fin à WaitAllIO si ce dernier est utilisé.
                         qSignalAll();
@@ -785,93 +621,62 @@ namespace llt.FileIO
                     // Si demande d'arrêt des traitements en attente suite à une erreur
                     else if (q == 1)
                     {
-                        // Arrêt des lectures asynchrone.
-                        if (wstop != null && !wstop.WaitOne(0))
-                        {
-                            lock (wstop)
-                            {
-                                wstop.Set();
-                            }
-                        }
                         // Suppression de tous les traitements.
                         lock (qTrt)
                         {
                             qTrt.Clear();
+                            if (wstop != null && !wstop.WaitOne(0)) wstop.Set();
                         }
-                        // Signal la fin à WaitAllIO si ce dernier est utilisé.
-                        qSignalAll();
                         // On reste dans la boucle en attente d'une prochaine action.
                         qstoptrt.Reset();
                     }
                     // Traitement normal
                     else if (q == 2)
                     {
-                        // On tient l'évènement pour éviter toute modification durant
-                        // le traitement.
-                        // NOTA: cette méthode ralentit le traitement mais permet à qWaitAll
-                        // d'être stable.
-                        lock (qcontinue)
+                        // Récupére le traitement à effectuer.
+                        _INFOTRT trt;
+                        lock (qTrt)
                         {
-                            // Récupére le traitement à effectuer.
-                            _INFOTRT trt;
-                            lock (qTrt)
-                            {
-                                if (qTrt.Count > 0)
-                                    trt = qTrt.Dequeue();
-                                else
-                                {
-                                    trt = new _INFOTRT();
-                                    trt.nbio = -1;
-                                }
-                            }
-                            // Si quelque-chose à faire
-                            // NOTA : dans le cas de la lecture, on signale même
-                            // si rien n'a été lu pour gérer la fin de fichier.
-                            if (trt.nbio >= 0)
-                            {
-                                // On initialise le message d'erreur asnchrone
-                                asyncErreur = null;
-                                // On lance le traitement liè à l'opération d'I/O.
-                                if (trt.typetrt.Equals(TypeTrtEnum.lecturefaite))
-                                {
-                                    // Avertit qu'une lecture est faite.
-                                    OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.lecturefaite, trt.nbio, trt.offset, trt.buffer));
-                                    // Avertit si dernier traitement effectué
-                                    qSignalAll();
-                                }
-                                else if (trt.typetrt.Equals(TypeTrtEnum.ecritureafaire))
-                                {
-                                    // Déclenche l'écriture physique
-                                    if (trt.nbio > 0)
-                                        ExeWriteFile(trt.nbio, trt.offset, trt.buffer);
-                                }
-                            }
+                            if (qTrt.Count > 0)
+                                trt = qTrt.Dequeue();
                             else
-                                qSignalAll(); // Avertit si dernier traitement
-
+                            {
+                                trt = new _INFOTRT();
+                                trt.nbio = -1;
+                            }
                             // Si plus rien à traiter on initialise.
                             if (qTrt.Count == 0) qcontinue.Reset();
                         }
+                        // Si quelque-chose à faire
+                        // NOTA : dans le cas de la lecture, on signale même
+                        // si rien n'a été lu pour gérer la fin de fichier.
+                        if (trt.nbio >= 0)
+                        {
+                            // On initialise le message d'erreur asnchrone
+                            asyncErreur = null;
+                            // On lance le traitement liè à l'opération d'I/O.
+                            if (trt.typetrt.Equals(TypeTrtEnum.lecturefaite))
+                            {
+                                // Avertit qu'une lecture est faite.
+                                OnBasicFileIOEvent(new BasicFileIOEventArgs(TypeIOEventEnum.lecturefaite, trt.nbio, trt.offset, trt.buffer));
+                            }
+                            else if (trt.typetrt.Equals(TypeTrtEnum.ecritureafaire))
+                            {
+                                // Déclenche l'écriture physique
+                                if (trt.nbio > 0)
+                                    ExeWriteFile(trt.nbio, trt.offset, trt.buffer);
+                            }
+                        }
                     }
+                    // Signal la fin à WaitAllIO si ce dernier est utilisé.
+                    qSignalAll();
                 }
                 catch (System.Exception eh)
                 {
                     // On arrête toute opération asynchrone.
-                    if (wstop != null)
-                    {
-                        lock (wstop)
-                        {
-                            wstop.Set();
-                        }
-                    }
+                    if (wstop != null) wstop.Set();
                     // On arrête tous les opérations sur le thread de traitement.
-                    if (qstoptrt != null)
-                    {
-                        lock (qstoptrt)
-                        {
-                            qstoptrt.Set();
-                        }
-                    }
+                    if (qstoptrt != null) qstoptrt.Set();
                     // Consignation de l'erreur asynchrone
                     asyncErreur = eh;
                 }
