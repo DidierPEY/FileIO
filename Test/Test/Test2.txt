@@ -1,0 +1,8 @@
+EC;testmairie;05052015;test;Mairie pour test;place de l'hôtel de Ville;;34000;Montpellier;Mairie de TEST;;testmairie
+COM;Mairie pour test
+place de l\'hôtel de Ville
+34000 Montpellier
+LC;K653723;PIECES ET BILLETS - COFFRET D ARGENT A COMPTER - 130 billets et 160 pièces;1;27.63;11;24.59;20
+LC;K753093;STICKERS COOKY Sachet 8 planches 174 gommettes 7,5 x 12cm, assortiment n°1 FETE DS MERES, DES PERES, Pâques…;1;7.09;11;6.31;20
+LC;K107130;CORRECTEUR TIPP-EX STYLO 4ml MINI SHAKE SQUEEZE;1;1.79;11;1.59;20
+FP;0
