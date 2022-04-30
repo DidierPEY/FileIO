@@ -498,7 +498,6 @@
             this.txtXML2.Name = "txtXML2";
             this.txtXML2.Size = new System.Drawing.Size(203, 20);
             this.txtXML2.TabIndex = 25;
-            this.txtXML2.Text = "c:\\temp\\test.xml";
             // 
             // txtFicData2
             // 
