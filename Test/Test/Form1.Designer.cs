@@ -616,7 +616,7 @@
             this.txtXML.Name = "txtXML";
             this.txtXML.Size = new System.Drawing.Size(203, 20);
             this.txtXML.TabIndex = 24;
-            this.txtXML.Text = "c:\\temp\\test.xml";
+            this.txtXML.Text = ".\\Test1.xml";
             // 
             // txtFicData
             // 
@@ -625,7 +625,7 @@
             this.txtFicData.Name = "txtFicData";
             this.txtFicData.Size = new System.Drawing.Size(203, 20);
             this.txtFicData.TabIndex = 22;
-            this.txtFicData.Text = "c:\\temp\\test.csv";
+            this.txtFicData.Text = ".\\Test1.csv";
             // 
             // label4
             // 

@@ -1,5 +1,5 @@
 <description>
-	<fichier nom="c:\temp\test.csv" codage="UTF8" sepenr="AUTO" sepchamp=";" delchamp='"'>
+	<fichier nom=".\test.csv" codage="UTF8" sepenr="AUTO" sepchamp=";" delchamp='"'>
 		<segment nom="entete" uniquepar="en">
 			<champ nom="typeligne" format="a"/>
 			<champ nom="numero cde internet" format="9"/>
@@ -37,12 +37,18 @@
 			<champ nom="port" format="9"/>
 			<champ nom="montant" format="9.0"/>
 		</segment>
+		<segment nom="reglement" uniquepar="op">
+			<champ nom="typeligne" format="a"/>
+			<champ nom="mode reglement" format="a"/>
+			<champ nom="montant" format="9.0"/>
+		</segment>
 		<liens>
 		.entete
 		..livraison.u
 		..facturation.u
 		..ligne
 		..pied.u
+		..reglement.u
 		</liens>
 	</fichier>
 	<tables>
@@ -70,9 +76,15 @@
 			<champ nom="prix vente remise TTC" format="System.Double"/>
 			<champ nom="montant vente TTC" format="System.Double"/>
 		</segment>
+		<segment nom="reglementtbl">
+			<champ nom="numero cde internet" format="System.Int32"/>
+			<champ nom="mode reglement" format="System.String"/>
+			<champ nom="montant" format="System.Double"/>
+		</segment>
 		<liens>
 		.entetetbl
 		..lignetbl.numero cde internet.numero cde internet
+		..reglementtbl.numero cde internet.numero cde internet
 		</liens>
 	</tables>
 	<export>
@@ -112,6 +124,10 @@
 		.=1.lignetbl.quantite
 		.montant.lignetbl.prix vente remise ttc
 		.montant.lignetbl.montant vente ttc
+		</segment>
+		<segment nom="reglement">
+		.mode reglement.reglementtbl
+		.montant.reglementtbl
 		</segment>
 	</export>
 </description>
