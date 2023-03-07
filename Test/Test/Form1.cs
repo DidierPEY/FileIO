@@ -91,9 +91,11 @@ namespace llt.Test
                 }
                 else if (sender.Equals(btnTestFTP))
                 {
-                    llt.FileIO.BasicFTP bftp = new BasicFTP(txtFTPServeur.Text, txtFTPUtilisateur.Text,txtFTPMotDePasse.Text, chkFTPKeepAlive.Checked, txtFTPDistant.Text, txtFTPLocal.Text);
-                    bftp.OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent;
-                    bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
+                    llt.FileIO.BasicFTP bftp = new BasicFTP(txtFTPServeur.Text, txtFTPUtilisateur.Text, txtFTPMotDePasse.Text, chkFTPKeepAlive.Checked, txtFTPDistant.Text, txtFTPLocal.Text)
+                    {
+                        OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent,
+                        DELFichierSource = BasicFTP._DELFICHIERSOURCE.non
+                    };
                     if (String.IsNullOrWhiteSpace(txtFTPDownload.Text)) return;
                     string nom= System.IO.Path.GetFileNameWithoutExtension(txtFTPDownload.Text);
                     string ext = System.IO.Path.GetExtension(txtFTPDownload.Text);
@@ -128,9 +130,11 @@ namespace llt.Test
                 }
                 else if (sender.Equals(btnTestFTP2))
                 {
-                    llt.FileIO.BasicFTP bftp = new BasicFTP(txtFTPServeur.Text, txtFTPUtilisateur.Text, txtFTPMotDePasse.Text, chkFTPKeepAlive.Checked, txtFTPDistant.Text , txtFTPLocal.Text);
-                    bftp.OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent;
-                    bftp.DELFichierSource = BasicFTP._DELFICHIERSOURCE.non;
+                    llt.FileIO.BasicFTP bftp = new BasicFTP(txtFTPServeur.Text, txtFTPUtilisateur.Text, txtFTPMotDePasse.Text, chkFTPKeepAlive.Checked, txtFTPDistant.Text, txtFTPLocal.Text)
+                    {
+                        OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent,
+                        DELFichierSource = BasicFTP._DELFICHIERSOURCE.non
+                    };
                     if (String.IsNullOrWhiteSpace(txtFTPUpload.Text)) return;
                     string nom = System.IO.Path.GetFileName(txtFTPUpload.Text);
                     string ext = System.IO.Path.GetExtension(txtFTPUpload.Text);

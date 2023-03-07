@@ -1652,8 +1652,10 @@ namespace llt.FileIO.ImportExport
             {
                 if (!ChampLongueurFixe)
                 {
-                    ChampFichier cf = new ChampFichier(formatchamp, nom);
-                    cf.Position = Champs.Count;
+                    ChampFichier cf = new ChampFichier(formatchamp, nom)
+                    {
+                        Position = Champs.Count
+                    };
                     champs.Add(cf);
                     if (cf.TD is Convert.Memo) this.champmemo = true; 
                 }

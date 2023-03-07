@@ -1097,11 +1097,13 @@ namespace llt.FileIO
         private System.Net.FtpWebRequest CreFwr(string fichier)
         {
             // Création de l'URI avec l'UriBuilder
-            UriBuilder urb = new UriBuilder();
-            urb.Scheme = "ftp";
-            urb.Host = Serveur;
-            urb.UserName = Utilisateur;
-            urb.Password = MotdePasse;
+            UriBuilder urb = new UriBuilder
+            {
+                Scheme = "ftp",
+                Host = Serveur,
+                UserName = Utilisateur,
+                Password = MotdePasse
+            };
             if (!ServeurPath.Equals(""))
                 urb.Path = ServeurPath;
             if (!urb.Path.EndsWith("/")) urb.Path = urb.Path + "/";

@@ -454,10 +454,12 @@ namespace llt.FileIO
                                     if (!enr.Champs[icol].ToString().Trim().Equals(""))
                                     {
                                         tfio.iColNomChamp.Add(icol, enr.Champs[icol].ToString().Trim());
-                                        System.Data.DataColumn dc = new System.Data.DataColumn();
-                                        dc.ColumnName = enr.Champs[icol].ToString().Trim();
-                                        dc.DataType = System.Type.GetType("System.String");
-                                        dc.AllowDBNull = true;
+                                        System.Data.DataColumn dc = new System.Data.DataColumn
+                                        {
+                                            ColumnName = enr.Champs[icol].ToString().Trim(),
+                                            DataType = System.Type.GetType("System.String"),
+                                            AllowDBNull = true
+                                        };
                                         tfio.ChgRowsDT.Columns.Add(dc);
                                     }
                                 }
@@ -512,10 +514,12 @@ namespace llt.FileIO
             // Création des colonnes.
             for (int i = dt.Columns.Count; i < enr.Champs.Length; i++)
             {
-                System.Data.DataColumn dc = new System.Data.DataColumn();
-                dc.ColumnName = "Champ" + (i + 1).ToString();
-                dc.DataType = System.Type.GetType("System.String");
-                dc.AllowDBNull = true;
+                System.Data.DataColumn dc = new System.Data.DataColumn
+                {
+                    ColumnName = "Champ" + (i + 1).ToString(),
+                    DataType = System.Type.GetType("System.String"),
+                    AllowDBNull = true
+                };
                 dt.Columns.Add(dc);
             }
         }
@@ -718,7 +722,7 @@ namespace llt.FileIO
         /// </remarks>
         protected void OnTextFileIOEvent(TextFileIOEventArgs tfioargs)
         {
-            if (TextFileIOEvent != null) TextFileIOEvent(this, tfioargs);
+            TextFileIOEvent?.Invoke(this, tfioargs);
         }
 
         /// <summary>

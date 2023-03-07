@@ -64,8 +64,10 @@ namespace llt.FileIO.ImportExport
                         throw new FileIOError(this.GetType().FullName, "Le fichier xml '" + sourcexml + "' est introuvable.");
 
                     // Ouverture du fichier XML
-                    xr = new System.Xml.XmlTextReader(sourcexml);
-                    xr.WhitespaceHandling = System.Xml.WhitespaceHandling.None;
+                    xr = new System.Xml.XmlTextReader(sourcexml)
+                    {
+                        WhitespaceHandling = System.Xml.WhitespaceHandling.None
+                    };
                     if (!xr.Read()) throw new FileIOError(this.GetType().FullName, "Le fichier xml '" + sourcexml + "' est vide.");
 
                     // Chargement du document contenant les régles de conversion

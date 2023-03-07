@@ -289,22 +289,26 @@ namespace llt.FileIO
                 // La lecture est effectuée.
                 if (nbio > 0)
                 {
-                    _INFOTRT trt = new _INFOTRT();
-                    trt.typetrt = TypeTrtEnum.lecturefaite;
-                    trt.nbio = nbio;
-                    trt.offset = offset;
-                    trt.buffer = (byte[])IOBuffer.Clone();
+                    _INFOTRT trt = new _INFOTRT
+                    {
+                        typetrt = TypeTrtEnum.lecturefaite,
+                        nbio = nbio,
+                        offset = offset,
+                        buffer = (byte[])IOBuffer.Clone()
+                    };
                     return qAdd(trt);
                 }
                 else
                 {
                     // NOTA : il peut s'agir d'une fin de fichier. On envoie
                     // donc une lecturefaite mais avec nbio à 0 afin de la signaler.
-                    _INFOTRT trt = new _INFOTRT();
-                    trt.typetrt = TypeTrtEnum.lecturefaite;
-                    trt.nbio = 0;
-                    trt.offset = 0;
-                    trt.buffer = new byte[] { };
+                    _INFOTRT trt = new _INFOTRT
+                    {
+                        typetrt = TypeTrtEnum.lecturefaite,
+                        nbio = 0,
+                        offset = 0,
+                        buffer = new byte[] { }
+                    };
                     qAdd(trt);
                     return false;
                 }
@@ -423,11 +427,13 @@ namespace llt.FileIO
             try
             {
                 // ON ajoute la demande d'écriture.
-                _INFOTRT trt = new _INFOTRT();
-                trt.typetrt = TypeTrtEnum.ecritureafaire;
-                trt.nbio = nbiowrite;
-                trt.offset = offset;
-                trt.buffer = (byte[])buffer.Clone();
+                _INFOTRT trt = new _INFOTRT
+                {
+                    typetrt = TypeTrtEnum.ecritureafaire,
+                    nbio = nbiowrite,
+                    offset = offset,
+                    buffer = (byte[])buffer.Clone()
+                };
                 return qAdd(trt);
             }
             catch (System.Exception eh)
@@ -641,8 +647,10 @@ namespace llt.FileIO
                                 trt = qTrt.Dequeue();
                             else
                             {
-                                trt = new _INFOTRT();
-                                trt.nbio = -1;
+                                trt = new _INFOTRT
+                                {
+                                    nbio = -1
+                                };
                             }
                             // Si plus rien à traiter on initialise.
                             if (qTrt.Count == 0) qcontinue.Reset();
