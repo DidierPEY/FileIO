@@ -41,6 +41,9 @@
             this.txtFile = new System.Windows.Forms.TextBox();
             this.btnLec = new System.Windows.Forms.Button();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.btnTestFTPPF = new System.Windows.Forms.Button();
+            this.txtFTPModele = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
             this.txtFTPDownload = new System.Windows.Forms.TextBox();
             this.txtFTPUpload = new System.Windows.Forms.TextBox();
             this.txtFTPLocal = new System.Windows.Forms.TextBox();
@@ -81,6 +84,7 @@
             this.txtXML = new System.Windows.Forms.TextBox();
             this.txtFicData = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.btnTestFTPPFex = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -229,6 +233,10 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.btnTestFTPPFex);
+            this.tabPage1.Controls.Add(this.btnTestFTPPF);
+            this.tabPage1.Controls.Add(this.txtFTPModele);
+            this.tabPage1.Controls.Add(this.label11);
             this.tabPage1.Controls.Add(this.txtFTPDownload);
             this.tabPage1.Controls.Add(this.txtFTPUpload);
             this.tabPage1.Controls.Add(this.txtFTPLocal);
@@ -251,6 +259,34 @@
             this.tabPage1.TabIndex = 2;
             this.tabPage1.Text = "Test FTP";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // btnTestFTPPF
+            // 
+            this.btnTestFTPPF.Location = new System.Drawing.Point(306, 174);
+            this.btnTestFTPPF.Margin = new System.Windows.Forms.Padding(2);
+            this.btnTestFTPPF.Name = "btnTestFTPPF";
+            this.btnTestFTPPF.Size = new System.Drawing.Size(77, 44);
+            this.btnTestFTPPF.TabIndex = 42;
+            this.btnTestFTPPF.Text = "Test PathFiles";
+            this.btnTestFTPPF.UseVisualStyleBackColor = true;
+            this.btnTestFTPPF.Click += new System.EventHandler(this.btn_click);
+            // 
+            // txtFTPModele
+            // 
+            this.txtFTPModele.Location = new System.Drawing.Point(99, 198);
+            this.txtFTPModele.Name = "txtFTPModele";
+            this.txtFTPModele.Size = new System.Drawing.Size(194, 20);
+            this.txtFTPModele.TabIndex = 41;
+            this.txtFTPModele.Text = "[*]";
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(6, 201);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(73, 13);
+            this.label11.TabIndex = 40;
+            this.label11.Text = "Modéle fichier";
             // 
             // txtFTPDownload
             // 
@@ -309,7 +345,7 @@
             this.chkFTPKeepAlive.Location = new System.Drawing.Point(328, 19);
             this.chkFTPKeepAlive.Name = "chkFTPKeepAlive";
             this.chkFTPKeepAlive.Size = new System.Drawing.Size(118, 17);
-            this.chkFTPKeepAlive.TabIndex = 33;
+            this.chkFTPKeepAlive.TabIndex = 29;
             this.chkFTPKeepAlive.Text = "supporte KeepAlive";
             this.chkFTPKeepAlive.UseVisualStyleBackColor = true;
             // 
@@ -635,6 +671,17 @@
             this.label4.TabIndex = 21;
             this.label4.Text = "Fichier de données";
             // 
+            // btnTestFTPPFex
+            // 
+            this.btnTestFTPPFex.Location = new System.Drawing.Point(387, 174);
+            this.btnTestFTPPFex.Margin = new System.Windows.Forms.Padding(2);
+            this.btnTestFTPPFex.Name = "btnTestFTPPFex";
+            this.btnTestFTPPFex.Size = new System.Drawing.Size(77, 44);
+            this.btnTestFTPPFex.TabIndex = 43;
+            this.btnTestFTPPFex.Text = "Test PathFilesEx";
+            this.btnTestFTPPFex.UseVisualStyleBackColor = true;
+            this.btnTestFTPPFex.Click += new System.EventHandler(this.btn_click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -718,6 +765,10 @@
         private System.Windows.Forms.TextBox txtFTPUpload;
         private System.Windows.Forms.TextBox txtFTPLocal;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox txtFTPModele;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Button btnTestFTPPF;
+        private System.Windows.Forms.Button btnTestFTPPFex;
     }
 }
 

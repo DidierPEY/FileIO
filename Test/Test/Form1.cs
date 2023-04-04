@@ -167,6 +167,26 @@ namespace llt.Test
                             MessageBox.Show("Aucun fichier copié sur le serveur");
                     }
                 }
+                else if (sender.Equals(btnTestFTPPF) || sender.Equals(btnTestFTPPFex))
+                {
+                    llt.FileIO.BasicFTP bftp = new BasicFTP(txtFTPServeur.Text, txtFTPUtilisateur.Text, txtFTPMotDePasse.Text, chkFTPKeepAlive.Checked, txtFTPDistant.Text, txtFTPLocal.Text)
+                    {
+                        OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent,
+                        DELFichierSource = BasicFTP._DELFICHIERSOURCE.non
+                    };
+                    Form2 f = new Form2();
+                    if (sender.Equals(btnTestFTPPF))
+                    {
+                        string[] resultats = bftp.PathFiles(false, txtFTPModele.Text);
+                        f.resPathFiles(resultats);
+                    }
+                    else
+                    {
+                        System.Collections.Generic.Dictionary<string, DateTime> resultats= bftp.PathFilesEx(false, txtFTPModele.Text);
+                        f.resPathFiles(resultats);
+                    }
+                    f.Show();
+                }
                 else if (sender.Equals(btnChgRows))
                 {
                     DataTable dt = new DataTable();
