@@ -23,6 +23,7 @@ namespace llt.Test
             if (dataGridView1.Columns.Count > 0) dataGridView1.Columns.Clear();
             dataGridView1.Columns.Add("fichier", "Fichier");
             foreach (string s in fichiers) dataGridView1.Rows.Add(s);
+            textBox1.Text = dataGridView1.Rows.Count.ToString("n0") + " fichiers(s)";
         }
         public void resPathFiles(System.Collections.Generic.Dictionary<string, DateTime> fichiers)
         {
@@ -31,6 +32,7 @@ namespace llt.Test
             dataGridView1.Columns.Add("fichier", "Fichier");
             dataGridView1.Columns.Add("dateheure", "Date");
             foreach (System.Collections.Generic.KeyValuePair<string, DateTime> s in fichiers) dataGridView1.Rows.Add(new object[] { s.Key, s.Value });
+            textBox1.Text = dataGridView1.Rows.Count.ToString("n0") + " fichiers(s)";
         }
 
 
@@ -38,6 +40,7 @@ namespace llt.Test
         {
             dataGridView1.Height = this.ClientSize.Height - dataGridView1.Left * 2;
             dataGridView1.Width = this.ClientSize.Width - dataGridView1.Top * 2;
+            textBox1.Width = dataGridView1.Width;
         }
     }
 }

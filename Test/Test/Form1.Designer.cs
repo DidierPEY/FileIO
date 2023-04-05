@@ -41,6 +41,7 @@
             this.txtFile = new System.Windows.Forms.TextBox();
             this.btnLec = new System.Windows.Forms.Button();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.btnTestFTPPFex = new System.Windows.Forms.Button();
             this.btnTestFTPPF = new System.Windows.Forms.Button();
             this.txtFTPModele = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
@@ -84,7 +85,7 @@
             this.txtXML = new System.Windows.Forms.TextBox();
             this.txtFicData = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.btnTestFTPPFex = new System.Windows.Forms.Button();
+            this.btnTestFTPPFex2 = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -233,6 +234,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.btnTestFTPPFex2);
             this.tabPage1.Controls.Add(this.btnTestFTPPFex);
             this.tabPage1.Controls.Add(this.btnTestFTPPF);
             this.tabPage1.Controls.Add(this.txtFTPModele);
@@ -260,6 +262,17 @@
             this.tabPage1.Text = "Test FTP";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // btnTestFTPPFex
+            // 
+            this.btnTestFTPPFex.Location = new System.Drawing.Point(387, 174);
+            this.btnTestFTPPFex.Margin = new System.Windows.Forms.Padding(2);
+            this.btnTestFTPPFex.Name = "btnTestFTPPFex";
+            this.btnTestFTPPFex.Size = new System.Drawing.Size(99, 44);
+            this.btnTestFTPPFex.TabIndex = 43;
+            this.btnTestFTPPFex.Text = "Liste des fichiers avec date";
+            this.btnTestFTPPFex.UseVisualStyleBackColor = true;
+            this.btnTestFTPPFex.Click += new System.EventHandler(this.btn_click);
+            // 
             // btnTestFTPPF
             // 
             this.btnTestFTPPF.Location = new System.Drawing.Point(306, 174);
@@ -267,7 +280,7 @@
             this.btnTestFTPPF.Name = "btnTestFTPPF";
             this.btnTestFTPPF.Size = new System.Drawing.Size(77, 44);
             this.btnTestFTPPF.TabIndex = 42;
-            this.btnTestFTPPF.Text = "Test PathFiles";
+            this.btnTestFTPPF.Text = "Liste des fichiers";
             this.btnTestFTPPF.UseVisualStyleBackColor = true;
             this.btnTestFTPPF.Click += new System.EventHandler(this.btn_click);
             // 
@@ -671,16 +684,16 @@
             this.label4.TabIndex = 21;
             this.label4.Text = "Fichier de données";
             // 
-            // btnTestFTPPFex
+            // btnTestFTPPFex2
             // 
-            this.btnTestFTPPFex.Location = new System.Drawing.Point(387, 174);
-            this.btnTestFTPPFex.Margin = new System.Windows.Forms.Padding(2);
-            this.btnTestFTPPFex.Name = "btnTestFTPPFex";
-            this.btnTestFTPPFex.Size = new System.Drawing.Size(77, 44);
-            this.btnTestFTPPFex.TabIndex = 43;
-            this.btnTestFTPPFex.Text = "Test PathFilesEx";
-            this.btnTestFTPPFex.UseVisualStyleBackColor = true;
-            this.btnTestFTPPFex.Click += new System.EventHandler(this.btn_click);
+            this.btnTestFTPPFex2.Location = new System.Drawing.Point(491, 174);
+            this.btnTestFTPPFex2.Margin = new System.Windows.Forms.Padding(2);
+            this.btnTestFTPPFex2.Name = "btnTestFTPPFex2";
+            this.btnTestFTPPFex2.Size = new System.Drawing.Size(99, 44);
+            this.btnTestFTPPFex2.TabIndex = 44;
+            this.btnTestFTPPFex2.Text = "Liste des fichiers à copier";
+            this.btnTestFTPPFex2.UseVisualStyleBackColor = true;
+            this.btnTestFTPPFex2.Click += new System.EventHandler(this.btn_click);
             // 
             // Form1
             // 
@@ -769,6 +782,7 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Button btnTestFTPPF;
         private System.Windows.Forms.Button btnTestFTPPFex;
+        private System.Windows.Forms.Button btnTestFTPPFex2;
     }
 }
 

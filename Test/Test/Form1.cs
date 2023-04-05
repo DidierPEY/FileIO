@@ -167,7 +167,7 @@ namespace llt.Test
                             MessageBox.Show("Aucun fichier copié sur le serveur");
                     }
                 }
-                else if (sender.Equals(btnTestFTPPF) || sender.Equals(btnTestFTPPFex))
+                else if (sender.Equals(btnTestFTPPF) || sender.Equals(btnTestFTPPFex) || sender.Equals(btnTestFTPPFex2))
                 {
                     llt.FileIO.BasicFTP bftp = new BasicFTP(txtFTPServeur.Text, txtFTPUtilisateur.Text, txtFTPMotDePasse.Text, chkFTPKeepAlive.Checked, txtFTPDistant.Text, txtFTPLocal.Text)
                     {
@@ -180,9 +180,14 @@ namespace llt.Test
                         string[] resultats = bftp.PathFiles(false, txtFTPModele.Text);
                         f.resPathFiles(resultats);
                     }
-                    else
+                    else if (sender.Equals(btnTestFTPPFex))
                     {
                         System.Collections.Generic.Dictionary<string, DateTime> resultats= bftp.PathFilesEx(false, txtFTPModele.Text);
+                        f.resPathFiles(resultats);
+                    }
+                    else
+                    {
+                        string[] resultats = bftp.PathFiles(bftp.PathFilesEx(false, txtFTPModele.Text), bftp.PathFilesEx(true, txtFTPModele.Text));
                         f.resPathFiles(resultats);
                     }
                     f.Show();
