@@ -41,6 +41,7 @@
             this.txtFile = new System.Windows.Forms.TextBox();
             this.btnLec = new System.Windows.Forms.Button();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.btnTestFTPPFex2 = new System.Windows.Forms.Button();
             this.btnTestFTPPFex = new System.Windows.Forms.Button();
             this.btnTestFTPPF = new System.Windows.Forms.Button();
             this.txtFTPModele = new System.Windows.Forms.TextBox();
@@ -85,7 +86,8 @@
             this.txtXML = new System.Windows.Forms.TextBox();
             this.txtFicData = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.btnTestFTPPFex2 = new System.Windows.Forms.Button();
+            this.txtFileW2 = new System.Windows.Forms.TextBox();
+            this.btnChgEcrRows = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -262,6 +264,17 @@
             this.tabPage1.Text = "Test FTP";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // btnTestFTPPFex2
+            // 
+            this.btnTestFTPPFex2.Location = new System.Drawing.Point(491, 174);
+            this.btnTestFTPPFex2.Margin = new System.Windows.Forms.Padding(2);
+            this.btnTestFTPPFex2.Name = "btnTestFTPPFex2";
+            this.btnTestFTPPFex2.Size = new System.Drawing.Size(99, 44);
+            this.btnTestFTPPFex2.TabIndex = 44;
+            this.btnTestFTPPFex2.Text = "Liste des fichiers à copier";
+            this.btnTestFTPPFex2.UseVisualStyleBackColor = true;
+            this.btnTestFTPPFex2.Click += new System.EventHandler(this.btn_click);
+            // 
             // btnTestFTPPFex
             // 
             this.btnTestFTPPFex.Location = new System.Drawing.Point(387, 174);
@@ -434,6 +447,8 @@
             // 
             // tabPage0
             // 
+            this.tabPage0.Controls.Add(this.btnChgEcrRows);
+            this.tabPage0.Controls.Add(this.txtFileW2);
             this.tabPage0.Controls.Add(this.txtDelChamp);
             this.tabPage0.Controls.Add(this.label2);
             this.tabPage0.Controls.Add(this.txtSepChamp);
@@ -452,7 +467,7 @@
             // 
             // txtDelChamp
             // 
-            this.txtDelChamp.Location = new System.Drawing.Point(319, 27);
+            this.txtDelChamp.Location = new System.Drawing.Point(584, 37);
             this.txtDelChamp.Name = "txtDelChamp";
             this.txtDelChamp.Size = new System.Drawing.Size(23, 20);
             this.txtDelChamp.TabIndex = 21;
@@ -460,7 +475,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(210, 30);
+            this.label2.Location = new System.Drawing.Point(475, 40);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(103, 13);
             this.label2.TabIndex = 20;
@@ -468,7 +483,7 @@
             // 
             // txtSepChamp
             // 
-            this.txtSepChamp.Location = new System.Drawing.Point(121, 27);
+            this.txtSepChamp.Location = new System.Drawing.Point(386, 37);
             this.txtSepChamp.Name = "txtSepChamp";
             this.txtSepChamp.Size = new System.Drawing.Size(23, 20);
             this.txtSepChamp.TabIndex = 19;
@@ -476,7 +491,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 30);
+            this.label1.Location = new System.Drawing.Point(271, 40);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(109, 13);
             this.label1.TabIndex = 18;
@@ -485,15 +500,15 @@
             // dgv
             // 
             this.dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgv.Location = new System.Drawing.Point(6, 53);
+            this.dgv.Location = new System.Drawing.Point(6, 81);
             this.dgv.Name = "dgv";
             this.dgv.RowHeadersWidth = 51;
-            this.dgv.Size = new System.Drawing.Size(736, 276);
+            this.dgv.Size = new System.Drawing.Size(736, 248);
             this.dgv.TabIndex = 17;
             // 
             // btnChgRows
             // 
-            this.btnChgRows.Location = new System.Drawing.Point(630, 5);
+            this.btnChgRows.Location = new System.Drawing.Point(212, 1);
             this.btnChgRows.Margin = new System.Windows.Forms.Padding(2);
             this.btnChgRows.Name = "btnChgRows";
             this.btnChgRows.Size = new System.Drawing.Size(113, 24);
@@ -514,7 +529,7 @@
             // chkNomChamp
             // 
             this.chkNomChamp.AutoSize = true;
-            this.chkNomChamp.Location = new System.Drawing.Point(213, 7);
+            this.chkNomChamp.Location = new System.Drawing.Point(5, 39);
             this.chkNomChamp.Name = "chkNomChamp";
             this.chkNomChamp.Size = new System.Drawing.Size(260, 17);
             this.chkNomChamp.TabIndex = 0;
@@ -684,16 +699,25 @@
             this.label4.TabIndex = 21;
             this.label4.Text = "Fichier de données";
             // 
-            // btnTestFTPPFex2
+            // txtFileW2
             // 
-            this.btnTestFTPPFex2.Location = new System.Drawing.Point(491, 174);
-            this.btnTestFTPPFex2.Margin = new System.Windows.Forms.Padding(2);
-            this.btnTestFTPPFex2.Name = "btnTestFTPPFex2";
-            this.btnTestFTPPFex2.Size = new System.Drawing.Size(99, 44);
-            this.btnTestFTPPFex2.TabIndex = 44;
-            this.btnTestFTPPFex2.Text = "Liste des fichiers à copier";
-            this.btnTestFTPPFex2.UseVisualStyleBackColor = true;
-            this.btnTestFTPPFex2.Click += new System.EventHandler(this.btn_click);
+            this.txtFileW2.Location = new System.Drawing.Point(377, 5);
+            this.txtFileW2.Margin = new System.Windows.Forms.Padding(2);
+            this.txtFileW2.Name = "txtFileW2";
+            this.txtFileW2.Size = new System.Drawing.Size(203, 20);
+            this.txtFileW2.TabIndex = 22;
+            this.txtFileW2.Text = ".\\ecriture.csv";
+            // 
+            // btnChgEcrRows
+            // 
+            this.btnChgEcrRows.Location = new System.Drawing.Point(584, 5);
+            this.btnChgEcrRows.Margin = new System.Windows.Forms.Padding(2);
+            this.btnChgEcrRows.Name = "btnChgEcrRows";
+            this.btnChgEcrRows.Size = new System.Drawing.Size(158, 24);
+            this.btnChgEcrRows.TabIndex = 23;
+            this.btnChgEcrRows.Text = "Chargement et écrit table";
+            this.btnChgEcrRows.UseVisualStyleBackColor = true;
+            this.btnChgEcrRows.Click += new System.EventHandler(this.btn_click);
             // 
             // Form1
             // 
@@ -783,6 +807,8 @@
         private System.Windows.Forms.Button btnTestFTPPF;
         private System.Windows.Forms.Button btnTestFTPPFex;
         private System.Windows.Forms.Button btnTestFTPPFex2;
+        private System.Windows.Forms.Button btnChgEcrRows;
+        private System.Windows.Forms.TextBox txtFileW2;
     }
 }
 

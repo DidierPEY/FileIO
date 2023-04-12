@@ -97,7 +97,7 @@ namespace llt.Test
                         DELFichierSource = BasicFTP._DELFICHIERSOURCE.non
                     };
                     if (String.IsNullOrWhiteSpace(txtFTPDownload.Text)) return;
-                    string nom= System.IO.Path.GetFileNameWithoutExtension(txtFTPDownload.Text);
+                    string nom = System.IO.Path.GetFileNameWithoutExtension(txtFTPDownload.Text);
                     string ext = System.IO.Path.GetExtension(txtFTPDownload.Text);
                     if (!String.IsNullOrEmpty(ext)) ext = ext.Substring(1);
                     if (!nom.Contains("*") && !ext.Contains("*"))
@@ -114,11 +114,11 @@ namespace llt.Test
                         else if (i == 0) nom = "[*]";
                         else nom = "['" + nom.Substring(0, i) + "'-*]";
                         i = ext.IndexOf('*');
-                        if (i < 0) ext = "['" + ext+ "']";
+                        if (i < 0) ext = "['" + ext + "']";
                         else if (i == 0) ext = "[*]";
                         else ext = "['" + ext.Substring(0, i) + "'-*]";
-                        string[] fichiers=bftp.CopyPathFiles(false, nom + "." + ext);
-                        if (fichiers.Length>0)
+                        string[] fichiers = bftp.CopyPathFiles(false, nom + "." + ext);
+                        if (fichiers.Length > 0)
                         {
                             string message = "\n";
                             foreach (string fichier in fichiers) message += fichier + "\n";
@@ -156,7 +156,7 @@ namespace llt.Test
                         if (i < 0) ext = "['" + ext + "']";
                         else if (i == 0) ext = "[*]";
                         else ext = "['" + ext.Substring(0, i) + "'-*]";
-                        string[] fichiers=bftp.CopyPathFiles(true, nom + "." + ext);
+                        string[] fichiers = bftp.CopyPathFiles(true, nom + "." + ext);
                         if (fichiers.Length > 0)
                         {
                             string message = "\n";
@@ -182,7 +182,7 @@ namespace llt.Test
                     }
                     else if (sender.Equals(btnTestFTPPFex))
                     {
-                        System.Collections.Generic.Dictionary<string, DateTime> resultats= bftp.PathFilesEx(false, txtFTPModele.Text);
+                        System.Collections.Generic.Dictionary<string, DateTime> resultats = bftp.PathFilesEx(false, txtFTPModele.Text);
                         f.resPathFiles(resultats);
                     }
                     else
@@ -192,17 +192,22 @@ namespace llt.Test
                     }
                     f.Show();
                 }
-                else if (sender.Equals(btnChgRows))
+                else if (sender.Equals(btnChgRows) || sender.Equals(btnChgEcrRows))
                 {
                     DataTable dt = new DataTable();
                     try
                     {
-                        string finenr = TextFileIO.GetEnrSepText(txtFile2.Text, Encoding.UTF8);
-                        TextFileIO.ChgRows(txtFile2.Text, Encoding.UTF8, finenr,
+                        string finenr = TextFileIO.GetEnrSepText(txtFile2.Text, Encoding.Default);
+                        TextFileIO.ChgRows(txtFile2.Text, Encoding.Default, finenr,
                             txtSepChamp.Text.Equals("") ? ' ' : txtSepChamp.Text[0],
                             txtDelChamp.Text.Equals("") ? ' ' : txtDelChamp.Text[0],
                             dt, chkNomChamp.Checked);
                         dgv.DataSource = dt;
+                        if (sender.Equals(btnChgEcrRows))
+                            TextFileIO.WriteRows(txtFileW2.Text, finenr,
+                                txtSepChamp.Text.Equals("") ? ' ' : txtSepChamp.Text[0],
+                                txtDelChamp.Text.Equals("") ? ' ' : txtDelChamp.Text[0],
+                                dt, chkNomChamp.Checked, System.Globalization.CultureInfo.CurrentCulture, false, Encoding.Default);
                     }
                     catch (System.Exception eh)
                     {
@@ -260,7 +265,7 @@ namespace llt.Test
                     DataSet h = dgvExport.DataSource as DataSet;
                     if (h == null) return;
                     // Lancement de l'exportation
-                    FileIO.ImportExport.Convert cv;            
+                    FileIO.ImportExport.Convert cv;
                     if (!txtXML2.Text.Equals(""))
                         cv = new llt.FileIO.ImportExport.Convert(FileIO.ImportExport.Convert.TypeSourceXMLEnum.FichierXML, txtXML2.Text);
                     else
@@ -268,7 +273,7 @@ namespace llt.Test
                     if (txtFicData2.Text.Equals(""))
                         cv.ImportFichier(h);
                     else
-                        cv.ImportFichier(h, false,txtFicData2.Text);
+                        cv.ImportFichier(h, false, txtFicData2.Text);
                 }
                 else if (sender.Equals(lstExport))
                 {
@@ -402,11 +407,11 @@ namespace llt.Test
             try
             {
                 string finenr = TextFileIO.GetEnrSepText(txtFile.Text, Encoding.Default);
-                tfio1 = new TextFileIO(txtFile.Text, Encoding.Default,finenr,' ',' ');
+                tfio1 = new TextFileIO(txtFile.Text, Encoding.Default, finenr, ' ', ' ');
                 tfio1.TextFileIOEvent += new TextFileIOEventHandler(tfio_TextFileIOEvent);
                 if (ecrfile)
                 {
-                    tfio2 = new TextFileIO(txtFileW.Text, Encoding.Default, finenr,' ',' ',true);
+                    tfio2 = new TextFileIO(txtFileW.Text, Encoding.Default, finenr, ' ', ' ', true);
                     tfio2.TextFileIOEvent += new TextFileIOEventHandler(tfio_TextFileIOEvent);
                 }
                 // Lecture de tout le fichier
@@ -476,7 +481,7 @@ namespace llt.Test
             else
             {
                 string[] tmplog = new string[log.Lines.Length + 1];
-                if (log.Lines.Length>0) log.Lines.CopyTo(tmplog, 1);
+                if (log.Lines.Length > 0) log.Lines.CopyTo(tmplog, 1);
                 tmplog[0] = ligne;
                 log.Lines = tmplog;
             }
@@ -587,16 +592,16 @@ namespace llt.Test
                 else if (e.TypeIOEvent.Equals(TypeIOEventEnum.lectureencours))
                 {
                     nbl++;
-                    assLog(System.DateTime.Now.ToString() + ":" + nbl.ToString() + " - lectureencours OFFSET "+e.Offset.ToString());
+                    assLog(System.DateTime.Now.ToString() + ":" + nbl.ToString() + " - lectureencours OFFSET " + e.Offset.ToString());
                     // Si écriture sur fichier, on en profite pour lancer le traitement.
                     if (ecrfile)
                     {
                         lock (wbuffer)
                         {
-                            if (wbuffer.Length>0)
+                            if (wbuffer.Length > 0)
                             {
                                 bfio2.WriteFile(wbuffer.Length, woffset, wbuffer);
-                                wbuffer = new byte[] {};
+                                wbuffer = new byte[] { };
                             }
                         }
                     }
@@ -619,7 +624,7 @@ namespace llt.Test
             }
             catch (System.Exception eh)
             {
-                throw new FileIOError("bfio_BasicFileIOEvent","Erreur lors du traitement de l'évènement", eh);
+                throw new FileIOError("bfio_BasicFileIOEvent", "Erreur lors du traitement de l'évènement", eh);
             }
         }
 
