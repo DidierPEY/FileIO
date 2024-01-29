@@ -166,7 +166,7 @@ namespace llt.FileIO.ImportExport
                         if (tmpvalue.Length > Longueur)
                             throw new FileIOError(this.GetType().FullName, "La taille de la chaine '" + tmpvalue + "' est trop grande (longueur maxi " + Longueur.ToString() + ")");
                         else
-                            tmpvalue = tmpvalue.PadRight(Longueur - tmpvalue.Length, ' ');
+                            tmpvalue = tmpvalue.PadRight(Longueur, ' ');
                         return tmpvalue;
                     }
                 }
@@ -253,7 +253,7 @@ namespace llt.FileIO.ImportExport
                         if (tmpvalue.Length > Longueur)
                             throw new FileIOError(this.GetType().FullName, "La taille du nombre entier '" + tmpvalue + "' est trop grande (nombre de chiffre(s) maximum " + Longueur.ToString() + ")");
                         else if (tmpvalue.Length < Longueur)
-                            tmpvalue = tmpvalue.PadLeft(Longueur - tmpvalue.Length, '0');
+                            tmpvalue = tmpvalue.PadLeft(Longueur, '0');
                         return tmpvalue;
                     }
                 }
@@ -457,14 +457,14 @@ namespace llt.FileIO.ImportExport
                                 if (tmpentiere.Length > LongueurEntier)
                                     throw new FileIOError(this.GetType().FullName, "La partie entiere '" + tmpentiere + "' est trop grande (nombre de chiffre(s) maximum " + LongueurEntier.ToString() + ")");
                                 else if (tmpentiere.Length < LongueurEntier)
-                                    tmpentiere = tmpentiere.PadLeft(LongueurEntier - tmpentiere.Length, '0');
+                                    tmpentiere = tmpentiere.PadLeft(LongueurEntier, '0');
                             }
                             else
                             {
                                 if (tmpdecimale.Length > LongueurDecimale)
                                     tmpdecimale = tmpdecimale.Substring(LongueurDecimale); // Pas d'erreur, simple perte de précision
                                 else if (tmpdecimale.Length < LongueurDecimale)
-                                    tmpdecimale = tmpdecimale.PadRight(LongueurDecimale - tmpdecimale.Length, '0');
+                                    tmpdecimale = tmpdecimale.PadRight(LongueurDecimale, '0');
                             }
                             return tmpentiere + tmpdecimale;
                         }
@@ -474,11 +474,11 @@ namespace llt.FileIO.ImportExport
                         if (tmpentiere.Length > LongueurEntier)
                             throw new FileIOError(this.GetType().FullName, "La partie entiere '" + tmpentiere + "' est trop grande (nombre de chiffre(s) maximum " + LongueurEntier.ToString() + ")");
                         else if (tmpentiere.Length < LongueurEntier)
-                            tmpentiere = tmpentiere.PadLeft(LongueurEntier - tmpentiere.Length, '0');
+                            tmpentiere = tmpentiere.PadLeft(LongueurEntier, '0');
                         if (tmpdecimale.Length > LongueurDecimale)
                             tmpdecimale = tmpdecimale.Substring(LongueurDecimale); // Pas d'erreur, simple perte de précision
                         else if (tmpdecimale.Length < LongueurDecimale)
-                            tmpdecimale = tmpdecimale.PadRight(LongueurDecimale - tmpdecimale.Length, '0');
+                            tmpdecimale = tmpdecimale.PadRight(LongueurDecimale, '0');
                         return tmpentiere + (SepDecimale.Equals(Char.MinValue) ? "" : SepDecimale.ToString()) + tmpdecimale;
                     }
                 }
