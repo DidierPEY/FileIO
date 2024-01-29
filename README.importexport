@@ -69,6 +69,7 @@ Il s’agit d’une balise <segment> classique mais avec deux attributs supplém
 -	 si=«condition» indique le filtre à appliquer pour extraire les données correspondantes.
 
 Plusieurs remarques importantes :
+-	les segments virtuels ne doivent être déclarés que dans <import>
 -	la condition si utilise un Table.Select(«condition»). La syntaxe de «condition» doit donc respecter les règles et restrictions édictées par .NET et non par le langage SQL de la base données ;
 -	le nom du segment virtuel doit être unique comme dans le cas d’un segment classique ;
 -	il est possible d’avoir plusieurs segments virtuels ;
