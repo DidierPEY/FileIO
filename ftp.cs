@@ -75,6 +75,13 @@ namespace llt.FileIO
         /// </summary>
         private bool SupportKeepAlive;
         /// <summary>
+        /// Indique si utilisation du mode passif
+        /// </summary>
+        /// <remarks>
+        /// Si vrai (valeur par défaut, envoie la commande PASV au serveur.
+        /// </remarks>
+        public bool UsePassive;
+        /// <summary>
         /// Le répertoir de travail en local
         /// </summary>
         public string LocalPath;
@@ -118,6 +125,7 @@ namespace llt.FileIO
             MotdePasse = motdepasse;
             ServeurPath = "";
             SupportKeepAlive = supportkeepalive;
+            UsePassive = true;
             LocalPath = ".\\";
             OWRFichierDestination = _OWRFICHIERDESTINATION.non;
             DELFichierSource = _DELFICHIERSOURCE.non;
@@ -852,7 +860,12 @@ namespace llt.FileIO
                             {
                                 string fichierftp = sr.ReadLine();
                                 if (!fichierftp.ToLower().StartsWith("d"))
-                                    fichiers.Add(fichierftp.Substring(fichierftp.LastIndexOf(" ") + 1));
+                                {
+                                    string[] infos = fichierftp.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                    string fichier = infos[8];
+                                    for (int pos = 9; pos < infos.Length; pos++) fichier = fichier + " " + infos[pos];
+                                    fichiers.Add(fichier);
+                                }
                             }
                         }
                         else
@@ -1111,7 +1124,7 @@ namespace llt.FileIO
 
             // Création de l'objet
             System.Net.FtpWebRequest fwr = (System.Net.FtpWebRequest)System.Net.WebRequest.Create(urb.Uri);
-            fwr.UsePassive = true;
+            fwr.UsePassive = UsePassive;
             fwr.UseBinary = true;
             fwr.KeepAlive = SupportKeepAlive;
 

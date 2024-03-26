@@ -172,7 +172,8 @@ namespace llt.Test
                     llt.FileIO.BasicFTP bftp = new BasicFTP(txtFTPServeur.Text, txtFTPUtilisateur.Text, txtFTPMotDePasse.Text, chkFTPKeepAlive.Checked, txtFTPDistant.Text, txtFTPLocal.Text)
                     {
                         OWRFichierDestination = BasicFTP._OWRFICHIERDESTINATION.siplusrecent,
-                        DELFichierSource = BasicFTP._DELFICHIERSOURCE.non
+                        DELFichierSource = BasicFTP._DELFICHIERSOURCE.non,
+                        UsePassive = chkFTPUsePassive.Checked
                     };
                     Form2 f = new Form2();
                     if (sender.Equals(btnTestFTPPF))
