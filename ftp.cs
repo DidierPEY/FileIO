@@ -982,7 +982,7 @@ namespace llt.FileIO
                     if (fichiers.Length == 0) return ListeFichiersEx;
                     // Création du tableau nom de fichier / date de modification
                     foreach (string fichier in fichiers)
-                        ListeFichiersEx.Add(fichier, System.IO.File.GetLastAccessTime(LocalPath + System.IO.Path.DirectorySeparatorChar + fichier));
+                        ListeFichiersEx.Add(fichier, System.IO.File.GetLastWriteTime(LocalPath + System.IO.Path.DirectorySeparatorChar + fichier));
                 }
                 else
                 {
